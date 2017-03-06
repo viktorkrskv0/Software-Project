@@ -1,0 +1,5 @@
+ti do list for the sp
+
+1. write the printing functions in the sp logger (all 4, error,warning, debug, info)
+2. to check if there is a memor allocation in the  logger, and add destroy accordingly
+3. 
