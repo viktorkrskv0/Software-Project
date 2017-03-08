@@ -174,7 +174,6 @@ SP_CONFIG_MSG spConfigGetImagePath(char* imagePath, const SPConfig config,
 		return SP_CONFIG_INVALID_ARGUMENT;
 	if (index >= config.spNumOfImages)
 		return SP_CONFIG_INDEX_OUT_OF_RANGE;
-	char res[MAX_LEN];
 	char* Sindex[MAX_LEN];
 	sprintf(Sindex, "%d", index);
 	strcpy(imagePath, "");// in case it wasn't empty
@@ -185,29 +184,26 @@ SP_CONFIG_MSG spConfigGetImagePath(char* imagePath, const SPConfig config,
 	return SP_CONFIG_SUCCESS;
 }
 
-/**
- * The function stores in pcaPath the full path of the pca file.
- * For example given the values of:
- *  spImagesDirectory = "./images/"
- *  spPcaFilename = "pca.yml"
- *
- * The functions stores "./images/pca.yml" to the address given by pcaPath.
- * Thus the address given by pcaPath must contain enough space to
- * store the resulting string.
- *
- * @param imagePath - an address to store the result in, it must contain enough space.
- * @param config - the configuration structure
- * @return
- *  - SP_CONFIG_INVALID_ARGUMENT - if imagePath == NULL or config == NULL
- *  - SP_CONFIG_SUCCESS - in case of success
- */
-SP_CONFIG_MSG spConfigGetPCAPath(char* pcaPath, const SPConfig config);
+//assuming there is a valid value of Directory and File Name
+//assuming that the total length in shorter than MAX_LEN (1025)
+//assuming pcaPath's can contain MAX_LEN (1025)
+//assuming the resulting path will be checked as valid before use
+//not assuming imagePath is an empty string
+SP_CONFIG_MSG spConfigGetPCAPath(char* pcaPath, const SPConfig config){
+	if (!pcaPath || !config)
+		return SP_CONFIG_INVALID_ARGUMENT;
+	strcpy(pcaPath, "");// in case it wasn't empty
+	strcat(pcaPath, config.spImagesDirectory);
+	strcat(pcaPath, config.spPCAFilename);
+	return SP_CONFIG_SUCCESS;
+}
 
 /**
  * Frees all memory resources associate with config.
  * If config == NULL nothig is done.
  */
 void spConfigDestroy(SPConfig config){
+	if (config)
 	free(config); //more?
 	fclose(configFile); //needed?
 }
