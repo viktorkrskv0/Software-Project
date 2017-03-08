@@ -2,14 +2,9 @@
 #include <stdio.h>
 #include "SPConfig.h"
 #define MAX_LEN 1025 //1024 string including the terminating null character
-
 FILE configFile;
 
-/**
- * A data-structure which is used for configuring the system.
- */
-
-typedef enum sp_config_msg_t {
+typedef enum sp_config_msg_t{
 	SP_CONFIG_MISSING_DIR,
 	SP_CONFIG_MISSING_PREFIX,
 	SP_CONFIG_MISSING_SUFFIX,
@@ -40,14 +35,6 @@ typedef struct sp_config_t{
 	char* spLoggerFilename;
 }SPConfig;
 
-
-char* getConfigFileName(char** argv, SP_CONFIG_MSG* msg){
-	msg = SP_CONFIG_SUCCESS;
-	if (!argv[1])
-		msg = SP_CONFIG_INVALID_ARGUMENT
-		return "spcbir.config";
-	return argv[1];// argv[1/0]?
-
 /**
   * - SP_CONFIG_INVALID_ARGUMENT - if filename == NULL
  * - SP_CONFIG_CANNOT_OPEN_FILE - if the configuration file given by filename cannot be open
@@ -59,9 +46,6 @@ char* getConfigFileName(char** argv, SP_CONFIG_MSG* msg){
  * - SP_CONFIG_MISSING_NUM_IMAGES - if spNumOfImages is missing
  * - SP_CONFIG_SUCCESS - in case of success
  */
-
-}
-
 SPConfig spConfigCreate(const char* filename, SP_CONFIG_MSG* msg){
 	assert (!msg);  //launch err
 	SPConfig config = (SPConfig)malloc(sizeof(SPConfig));
@@ -91,22 +75,9 @@ SPConfig spConfigCreate(const char* filename, SP_CONFIG_MSG* msg){
 	config.spLoggerLevel = 3;
 	config.spLoggerFilename = stdout;
 
-
 	fclose(configFile);
 	return config;
 }
-
-	SP_CONFIG_MISSING_DIR,
-	SP_CONFIG_MISSING_PREFIX,
-	SP_CONFIG_MISSING_SUFFIX,
-	SP_CONFIG_MISSING_NUM_IMAGES,
-	SP_CONFIG_CANNOT_OPEN_FILE,
-	SP_CONFIG_ALLOC_FAIL,
-	SP_CONFIG_INVALID_INTEGER,
-	SP_CONFIG_INVALID_STRING,
-	SP_CONFIG_INVALID_ARGUMENT,
-	SP_CONFIG_INDEX_OUT_OF_RANGE,
-	SP_CONFIG_SUCCESS
 
 //assuming there is a valid value of ExtractionMode
 bool spConfigIsExtractionMode(const SPConfig config, SP_CONFIG_MSG* msg){
@@ -198,13 +169,10 @@ SP_CONFIG_MSG spConfigGetPCAPath(char* pcaPath, const SPConfig config){
 	return SP_CONFIG_SUCCESS;
 }
 
-/**
- * Frees all memory resources associate with config.
- * If config == NULL nothig is done.
- */
 void spConfigDestroy(SPConfig config){
-	if (config)
-	free(config); //more?
-	fclose(configFile); //needed?
+	if (config){
+		free(config); //more?
+		fclose(configFile); //needed?
+	}
 }
 
