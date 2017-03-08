@@ -1,50 +1,35 @@
-/*
- * Initialize from config
- * Calc features if needed
- * Ask for quary pic
- * Show results (extended/not extended)
- */
-
 #include "sp_image_proc_util.h"
+#include "SPConfig.h"
+#include "main_aux.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "main_aux.h"
 #include <stdbool.h>
 
-//System Variables with default value
-char* string spImagesDirectory;
-char* spImagesPrefix;
-char* spImagesSuffix;
-int spNumOfImages;
+SP_CONFIG_MSG* msg;
+SPConfig config;
 
-//System Variables without default value
-int spPCADimension = 20;
-char* spPCAFilename = pca.yml;
-int spNumOfFeatures = 100;
-bool spExtractionMode = true;
-int spNumOfSimilarImages = 1;
-enum spKDTreeSplitMethod = MAX_SPREAD;
-int spKNN = 1;
-bool spMinimalGUI = false;
-int spLoggerLevel = 3;
-char* spLoggerFilename = stdout;
-
-
+#define manageMSG spManageMSG(msg, config) ? return -1 : continue
 
 int main(int argc, char** argv){
-	getConfigFileName(argv[]);
+	// PART A - initiating
+	config = spConfigCreate(argv[1], msg);
+	manageMSG;//assuming destroy will be done before if needed
+	if (config.spExtractionMode)
+		spExtract(config, msg);//including verifying DONE and saving to directory
+	else//maybe anyway?
+		extractFromFiles(config, msg);
+	initDataStructures(config, msg);
 
-
-
-
-	//inialize from config
-	initSysVariables(*spImagesDirectory, *spImagesPrefix, *spImagesSuffix, *spNumOfImages, *spPCADimension, 
-			*spPCAFilename, *spNumOfFeatures, *spExtractionMode, *spNumOfSimilarImages, *spKDTreeSplitMethod, 
-			*spKNN, *spMinimalGUI, *spLoggerLevel, *spLoggerFilename);
-	create new run
-	open config file
-	read variables from config file and initilize of run.fetures from config
-
-	if (spExtractionMode) calc features
+	// PART B - Query: get query & answer it or exit
+	While (true){
+		comand = receiveComand(msg);
+		manageMSG;
+		comand? continue : return 0;
+		resImages = findSimilarImages(query, msg);
+		manageMSG;
+		showImages(config.spMinimalGUI, resImages, msg);
+		manageMSG;
+	}
 }

@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include "SPConfig.h"
 #define MAX_LEN 1025 //1024 string including the terminating null character
-FILE configFile;
+FILE* configFile;
 
 typedef enum sp_config_msg_t{
 	SP_CONFIG_MISSING_DIR,
