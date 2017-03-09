@@ -14,6 +14,7 @@ SPConfig config;
 
 int main(int argc, char** argv){
 	// PART A - initiating
+	//logger? destroy logger?
 	config = spConfigCreate(argv[1], msg);
 	manageMSG;//assuming destroy will be done before if needed
 	if (config.spExtractionMode)
