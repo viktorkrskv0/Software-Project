@@ -7,7 +7,8 @@
 #include "main_aux.h"
 #include <stdbool.h>
 
-SP_CONFIG_MSG* msg;
+SP_CONFIG_MSG* Cmsg;
+SP_LOGGER_MSG Lmsg;
 SPConfig config;
 
 //#define manageMSG if(spManageMSG(msg, config)) return-1
@@ -16,14 +17,14 @@ SPConfig config;
 int main(int argc, char** argv){
 	// PART A - initiating
 	//logger? destroy logger?
-	config = spConfigCreate(argv[1], msg); // must be initialized before a printing can be made with the Logger
-	msg = spLoggerCreate(config.spLoggerFilename, config.spLoggerLevel); //what to do with the returned msg?
+	config = spConfigCreate(argv[1], Cmsg); // must be initialized before a printing can be made with the Logger
+	Lmsg = spLoggerCreate(config.spLoggerFilename, config.spLoggerLevel); //what to do with the returned msg?
 //	manageMSG; //assuming destroy will be done before if needed
 	if (config.spExtractionMode)
-		spExtract(config, msg); //including verifying DONE and saving to directory
+		spExtract(config, Cmsg); //including verifying DONE and saving to directory
 	else //maybe anyway?
-		extractFromFiles(config, msg);
-	initDataStructures(config, msg);
+		extractFromFiles(config, Cmsg);
+	initDataStructures(config, Cmsg);
 
 	// PART B - Query: get query & answer it or exit
 //	While (true){

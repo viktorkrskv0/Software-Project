@@ -4,20 +4,6 @@
 #define MAX_LEN 1025 //1024 string including the terminating null character
 FILE* configFile;
 
-typedef enum sp_config_msg_t{
-	SP_CONFIG_MISSING_DIR,
-	SP_CONFIG_MISSING_PREFIX,
-	SP_CONFIG_MISSING_SUFFIX,
-	SP_CONFIG_MISSING_NUM_IMAGES,
-	SP_CONFIG_CANNOT_OPEN_FILE,
-	SP_CONFIG_ALLOC_FAIL,
-	SP_CONFIG_INVALID_INTEGER,
-	SP_CONFIG_INVALID_STRING,
-	SP_CONFIG_INVALID_ARGUMENT,
-	SP_CONFIG_INDEX_OUT_OF_RANGE,
-	SP_CONFIG_SUCCESS
-} SP_CONFIG_MSG;
-
 typedef struct sp_config_t{
 	char* spImagesDirectory;
 	char* spImagesPrefix;
@@ -31,7 +17,7 @@ typedef struct sp_config_t{
 	enum spKDTreeSplitMethod;
 	int spKNN;
 	bool spMinimalGUI;
-	int spLoggerLevel;
+	SP_LOGGER_LEVEL spLoggerLevel;
 	char* spLoggerFilename;
 }SPConfig;
 
