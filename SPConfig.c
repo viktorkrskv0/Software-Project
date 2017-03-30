@@ -48,32 +48,36 @@ typedef struct sp_config_t{
  */
 SPConfig spConfigCreate(const char* filename, SP_CONFIG_MSG* msg){
 	assert (!msg);  //launch err
+
+	//malloc
 	SPConfig config = (SPConfig)malloc(sizeof(SPConfig));
 	if (!config){
 		msg = SP_CONFIG_ALLOC_FAIL;
 		return NULL;
 	}
 
+	// valid file?
 	configFile = fopen(filename, "r");
 	checkConfigFileValid();
 	if (msg != SP_CONFIG_SUCCESS)
 		destroy(config);//correct??
-	AssignvariablesfromConfig();
 
 	config.spImagesDirectory
 	config.spImagesPrefix;
 	config.spImagesSuffix;
 	config.spNumOfImages;
 	config.spPCADimension = 20;
-	config.spPCAFilename = pca.yml;
+//	config.spPCAFilename = pca.yml;
 	config.spNumOfFeatures = 100;
 	config.spExtractionMode = true;
 	config.spNumOfSimilarImages = 1;
-	config.spKDTreeSplitMethod = MAX_SPREAD;
+//	config.spKDTreeSplitMethod = MAX_SPREAD;
 	config.spKNN = 1;
 	config.spMinimalGUI = false;
 	config.spLoggerLevel = 3;
 	config.spLoggerFilename = stdout;
+
+	AssignvariablesfromConfig(); //Viktor: including msg (ex. info msg "used default value "20" for spPCADimension")
 
 	fclose(configFile);
 	return config;
