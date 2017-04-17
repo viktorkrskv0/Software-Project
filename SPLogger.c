@@ -7,6 +7,7 @@
 #define MAX_LEN 1025 //1024 string including the terminating null character
 
 
+/** A type used for defining the logger**/
 typedef struct sp_logger_t{
 	FILE* outputChannel; //The logger file
 	bool isStdOut; //Indicates if the logger is stdout
@@ -16,6 +17,21 @@ typedef struct sp_logger_t{
 SPLogger logger = NULL; // Global variable holding the logger
 
 
+/**
+ * Creates a logger. This function should be called once, prior
+ * to the usage of any SP Logger print functions. It is the responsibility
+ * of the user to create the logger prior to usage, and the logger
+ * must be destroyed at the end of usage.
+ *
+ * @param filename - The name of the log file, if not specified stdout is used
+ * 					 as default.
+ * @param level - The level of the logger prints
+ * @return
+ * SP_LOGGER_DEFINED 			- The logger has been defined
+ * SP_LOGGER_OUT_OF_MEMORY 		- In case of memory allocation failure
+ * SP_LOGGER_CANNOT_OPEN_FILE 	- If the file given by filename cannot be opened
+ * SP_LOGGER_SUCCESS 			- In case the logger has been successfully opened
+ */
 SP_LOGGER_MSG spLoggerCreate(const char* filename, SP_LOGGER_LEVEL level) {
 	if (logger != NULL) { //Already defined
 		return SP_LOGGER_DEFINED;
@@ -41,6 +57,10 @@ SP_LOGGER_MSG spLoggerCreate(const char* filename, SP_LOGGER_LEVEL level) {
 }
 
 
+/**
+ * Frees all memory allocated for the logger. If the logger is not defined
+ * then nothing happens.
+ */
 void spLoggerDestroy() {
 	if (!logger) {
 		return;
@@ -108,6 +128,7 @@ char* formatInfoMSG(const char* msg){
 	free(temp);
 	return formatedMSG;
 }
+
 
 /**
  * 	Prints error message. The error message format is given below:
