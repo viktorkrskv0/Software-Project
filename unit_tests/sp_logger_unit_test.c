@@ -70,9 +70,20 @@ static bool basicLoggerDebugTest() {
 	return true;
 }
 
+
+//msg should be printed even though it's on ERROR only level
+static bool basicLoggerRegularMSGTest() {
+	const char* testFile = "basicLoggerRegularMSGTest.log";
+	ASSERT_TRUE(spLoggerCreate(testFile,SP_LOGGER_ERROR_LEVEL) == SP_LOGGER_SUCCESS);
+	ASSERT_TRUE(spLoggerPrintMsg("MSGE") == SP_LOGGER_SUCCESS);
+	spLoggerDestroy();
+	return true;
+}
+
 int main() {
 	RUN_TEST(basicLoggerTest);
 	RUN_TEST(basicLoggerErrorTest);
 	RUN_TEST(basicLoggerDebugTest);
+	RUN_TEST(basicLoggerRegularMSGTest);
 	return 0;
 }

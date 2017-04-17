@@ -2,16 +2,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 #define SP_LOGGER_OPEN_MODE "w" //File open mode
 #define MAX_LEN 1025 //1024 string including the terminating null character
-sp_logger_t* logger = NULL; // Global variable holding the logger
 
 
-typedef struct sp_logger_t*{
+typedef struct sp_logger_t{
 	FILE* outputChannel; //The logger file
 	bool isStdOut; //Indicates if the logger is stdout
 	SP_LOGGER_LEVEL level; //Indicates the level
-}SPLogger;
+}*SPLogger;
+
+SPLogger logger = NULL; // Global variable holding the logger
+
 
 SP_LOGGER_MSG spLoggerCreate(const char* filename, SP_LOGGER_LEVEL level) {
 	if (logger != NULL) { //Already defined
@@ -70,15 +73,41 @@ void spLoggerDestroy() {
  * 	returns the final fomated msg including /n between the lines and at the end (always needed)
  */
 char* formatMSG(const char* msg, const char* file,	const char* function, const int line, char* msgType){
-	char* formatedMSG = malloc(MAX_LEN*4 + strlen(msg));
-	sprintf(formatedMSG, "---%s%---\n", msgType);
-	sprintf(formatedMSG, "- file: %s\n", file);
-	sprintf(formatedMSG, "- function: %s\n", function);
-	sprintf(formatedMSG, "- line: %s\n", line);
-	sprintf(formatedMSG, "- message: %s\n", msg);
+	char* formatedMSG = calloc(1, MAX_LEN*5 + strlen(msg));
+	char* temp = calloc(1, MAX_LEN*5 + strlen(msg));
+	sprintf(temp, "---%s---\n", msgType);
+	strcat(formatedMSG, temp);
+	sprintf(temp, "- file: %s\n", file);
+	strcat(formatedMSG, temp);
+	sprintf(temp, "- function: %s\n", function);
+	strcat(formatedMSG, temp);
+	sprintf(temp, "- line: %d\n", line);
+	strcat(formatedMSG, temp);
+	sprintf(temp, "- message: %s\n", msg);
+	strcat(formatedMSG, temp);
+	free(temp);
 	return formatedMSG;
 }
 
+
+/*
+ * prints the msg by this format:
+ * ---INFO---
+ *  - message: <msg>
+ *
+ * 	<msg> 	   - is the string given by msg, it contains the msg given by the user
+ *
+ * 	returns the final fomated msg including \n between the lines and at the end (always needed)
+ */
+char* formatInfoMSG(const char* msg){
+	char* formatedMSG = calloc(1, MAX_LEN*5 + strlen(msg));
+	char* temp = calloc(1, MAX_LEN*5 + strlen(msg));
+	sprintf(formatedMSG, "---INFO---\n");
+	sprintf(temp, "- message: %s\n", msg);
+	strcat(formatedMSG, temp);
+	free(temp);
+	return formatedMSG;
+}
 
 /**
  * 	Prints error message. The error message format is given below:
@@ -125,10 +154,11 @@ SP_LOGGER_MSG spLoggerPrintError(const char* msg, const char* file,
 	if (!msg || !file || !function || line < 0) // if msg / file / func / line invalid
 		return SP_LOGGER_INVAlID_ARGUMENT;
 	formatedMSG = formatMSG(msg, file, function, line, "ERROR"); // get the msg to be printed
-	if (logger.isStdOut == true)
-		success = printf("%s/n", formatedMSG);
+	if (logger->isStdOut == true)
+		success = printf("%s", formatedMSG);
 	else
-		success = fprintf(logger.outputChannel, "%s/n", formatedMSG); // print to stdout/file
+		success = fprintf(logger->outputChannel, "%s", formatedMSG); // print to stdout/file
+	free(formatedMSG);
 	if(success < 0)
 		return SP_LOGGER_WRITE_FAIL;
 	else
@@ -172,17 +202,20 @@ SP_LOGGER_MSG spLoggerPrintError(const char* msg, const char* file,
  */
 SP_LOGGER_MSG spLoggerPrintWarning(const char* msg, const char* file,
 		const char* function, const int line){
-	int success;
 	char* formatedMSG;
 	if(!logger) // if logger is NULL
 		return SP_LOGGER_UNDIFINED;
-	if (logger.SP_LOGGER_LEVEL != SP_LOGGER_ERROR_LEVEL)
-		return SP_LOGGER_WRITE_FAIL;
+	if (logger->level == SP_LOGGER_ERROR_LEVEL)
+		return SP_LOGGER_SUCCESS;
 	if (!msg || !file || !function || line < 0) // if msg / file / func / line invalid
 		return SP_LOGGER_INVAlID_ARGUMENT;
 	formatedMSG = formatMSG(msg, file, function, line, "WARNING"); // get the msg to be printed
-	(logger.isStdOut == true) ? success = printf("%s/n", formatedMSG) : success = fprintf(logger.outputChannel, "%s/n", formatedMSG); // print to stdout/file
-	(success < 0) ?  return SP_LOGGER_WRITE_FAIL : return SP_LOGGER_SUCCESS;
+	if (logger->isStdOut == true)
+		printf("%s", formatedMSG);
+	else
+		fprintf(logger->outputChannel, "%s", formatedMSG); // print to stdout/file
+	free(formatedMSG);
+	return SP_LOGGER_SUCCESS;
 }
 
 
@@ -212,13 +245,20 @@ SP_LOGGER_MSG spLoggerPrintInfo(const char* msg){
 	char* formatedMSG;
 	if(!logger) // if logger is NULL
 		return SP_LOGGER_UNDIFINED;
-	if (logger.SP_LOGGER_LEVEL == SP_LOGGER_INFO_WARNING_ERROR_LEVEL || logger.SP_LOGGER_LEVEL == SP_LOGGER_DEBUG_INFO_WARNING_ERROR_LEVEL)
-		return SP_LOGGER_WRITE_FAIL;
-	if (!msg || !file || !function || line < 0) // if msg / file / func / line invalid
+	if (logger->level == SP_LOGGER_ERROR_LEVEL || logger->level == SP_LOGGER_WARNING_ERROR_LEVEL)
+		return SP_LOGGER_SUCCESS;
+	if (!msg) // if msg / file / func / line invalid
 		return SP_LOGGER_INVAlID_ARGUMENT;
-	formatedMSG = formatMSG(msg, file, function, line, "INFO"); // get the msg to be printed
-	(logger.isStdOut == true) ? success = printf("%s/n", fomatedMSG) : success = fprintf(logger.outputChannel, "%s/n", fomatedMSG); // print to stdout/file
-	(success < 0) ?  return = SP_LOGGER_WRITE_FAIL : return = SP_LOGGER_SUCCESS;
+	formatedMSG = formatInfoMSG(msg); // get the msg to be printed
+	if (logger->isStdOut == true)
+		success = printf("%s", formatedMSG);
+	else
+		success = fprintf(logger->outputChannel, "%s", formatedMSG); // print to stdout/file
+	free(formatedMSG);
+	if(success < 0)
+		return SP_LOGGER_WRITE_FAIL;
+	else
+		return SP_LOGGER_SUCCESS;
 }
 
 
@@ -260,13 +300,20 @@ SP_LOGGER_MSG spLoggerPrintDebug(const char* msg, const char* file,
 	char* formatedMSG;
 	if(!logger) // if logger is NULL
 		return SP_LOGGER_UNDIFINED;
-	if (logger.SP_LOGGER_LEVEL == SP_LOGGER_DEBUG_INFO_WARNING_ERROR_LEVEL)
-		return SP_LOGGER_WRITE_FAIL;
+	if (logger->level != SP_LOGGER_DEBUG_INFO_WARNING_ERROR_LEVEL)
+		return SP_LOGGER_SUCCESS;
 	if (!msg || !file || !function || line < 0) // if msg / file / func / line invalid
 		return SP_LOGGER_INVAlID_ARGUMENT;
 	formatedMSG = formatMSG(msg, file, function, line, "DEBUG"); // get the msg to be printed
-	(logger.isStdOut == true) ? success = printf("%s/n", fomatedMSG) : success = fprintf(logger.outputChannel, "%s/n", fomatedMSG); // print to stdout/file
-	(success < 0) ?  return = SP_LOGGER_WRITE_FAIL : return = SP_LOGGER_SUCCESS;
+	if (logger->isStdOut == true)
+		success = printf("%s", formatedMSG);
+	else
+		success = fprintf(logger->outputChannel, "%s", formatedMSG); // print to stdout/file
+	free(formatedMSG);
+	if(success < 0)
+		return SP_LOGGER_WRITE_FAIL;
+	else
+		return SP_LOGGER_SUCCESS;
 }
 
 
@@ -287,8 +334,9 @@ SP_LOGGER_MSG spLoggerPrintMsg(const char* msg){
 		return SP_LOGGER_UNDIFINED;
 	if (!msg) // if msg invalid
 		return SP_LOGGER_INVAlID_ARGUMENT;
-	success = printf("%s/n", msg);
-	(success < 0) ?  return = SP_LOGGER_WRITE_FAIL : return = SP_LOGGER_SUCCESS;
+	success = printf("%s\n", msg);
+	if(success < 0)
+		return SP_LOGGER_WRITE_FAIL;
+	else
+		return SP_LOGGER_SUCCESS;
 }
-
-#endif
