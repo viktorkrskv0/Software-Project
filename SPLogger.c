@@ -95,6 +95,8 @@ void spLoggerDestroy() {
 char* formatMSG(const char* msg, const char* file,	const char* function, const int line, char* msgType){
 	char* formatedMSG = calloc(1, MAX_LEN*5 + strlen(msg));
 	char* temp = calloc(1, MAX_LEN*5 + strlen(msg));
+	if (!formatedMSG || !temp)
+		spLoggerPrintMsg("Allocation error");
 	sprintf(temp, "---%s---\n", msgType);
 	strcat(formatedMSG, temp);
 	sprintf(temp, "- file: %s\n", file);
@@ -122,6 +124,8 @@ char* formatMSG(const char* msg, const char* file,	const char* function, const i
 char* formatInfoMSG(const char* msg){
 	char* formatedMSG = calloc(1, MAX_LEN*5 + strlen(msg));
 	char* temp = calloc(1, MAX_LEN*5 + strlen(msg));
+	if (!formatedMSG || !temp)
+		spLoggerPrintMsg("Allocation error");
 	sprintf(formatedMSG, "---INFO---\n");
 	sprintf(temp, "- message: %s\n", msg);
 	strcat(formatedMSG, temp);

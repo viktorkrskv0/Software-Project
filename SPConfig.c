@@ -1,3 +1,5 @@
+// He who uses the functions below should deal with the resulting value stored in msg
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -51,7 +53,7 @@ typedef struct sp_config_t{
  *
  */
 SPConfig spConfigCreate(const char* filename, SP_CONFIG_MSG* msg){
-	assert (!msg);  //launch err
+	assert (msg);  //launch err
 
 	//malloc
 	SPConfig config;
@@ -61,9 +63,16 @@ SPConfig spConfigCreate(const char* filename, SP_CONFIG_MSG* msg){
 		return NULL;
 	}
 
-	// valid file?
+	if (!filename)
+		*msg = SP_CONFIG_INVALID_ARGUMENT;
+	else{
 	configFile = fopen(filename, "r");
-//	checkConfigFileValid(); // Viktor will complete
+	if (!configFile)
+		*msg = SP_CONFIG_CANNOT_OPEN_FILE;
+	}
+
+
+//	*msg = checkConfigFileValid(configFile); // Viktor will complete
 	if (*msg != SP_CONFIG_SUCCESS)
 		spConfigDestroy(config);//correct??
 
@@ -84,8 +93,8 @@ SPConfig spConfigCreate(const char* filename, SP_CONFIG_MSG* msg){
 //	config->spLoggerFilename = stdout;
 
 //	AssignvariablesfromConfig(); //Viktor: including msg (ex. info msg "used default value "20" for spPCADimension")
-
-	fclose(configFile);
+	if(configFile)
+		fclose(configFile);
 	return config;
 }
 

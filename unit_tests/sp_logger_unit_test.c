@@ -75,12 +75,12 @@ static bool basicLoggerDebugTest() {
 static bool basicLoggerRegularMSGTest() {
 	const char* testFile = "basicLoggerRegularMSGTest.log";
 	ASSERT_TRUE(spLoggerCreate(testFile,SP_LOGGER_ERROR_LEVEL) == SP_LOGGER_SUCCESS);
-	ASSERT_TRUE(spLoggerPrintMsg("MSGE") == SP_LOGGER_SUCCESS);
+	ASSERT_TRUE(spLoggerPrintMsg("Regular MSG - unit test check") == SP_LOGGER_SUCCESS);
 	spLoggerDestroy();
 	return true;
 }
 
-int main() {
+int main1() {
 	RUN_TEST(basicLoggerTest);
 	RUN_TEST(basicLoggerErrorTest);
 	RUN_TEST(basicLoggerDebugTest);
