@@ -452,7 +452,7 @@ bool assignvariablesfromConfig(SPConfig config){
 				var = getTheVariable(line);
 				for(i = 0; i < numberOfArguements; i++){
 					if(strcmp(sysVarsControl[i],var) == 0){
-						length = strlen(val)
+						length = strlen(val);
 						switch(i){
 							case 0://need to check that the pointer is ok (the struct of SPConfig is pointer struct)
 								config->spImagesDirectory = (char*)malloc((sizeof(char)*length) + 1);
