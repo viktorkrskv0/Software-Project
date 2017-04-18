@@ -41,12 +41,21 @@ typedef struct sp_config_t{
 	int spNumOfFeatures;
 	bool spExtractionMode;
 	int spNumOfSimilarImages;
-//	enum spKDTreeSplitMethod;
+	enum spKDTreeSplitMethod;
 	int spKNN;
 	bool spMinimalGUI;
 	SP_LOGGER_LEVEL spLoggerLevel;
 	char* spLoggerFilename;
 }*SPConfig;
+
+typedef enum sp_kdtree_split_method {
+	RANDOM,
+	MAX_SPREAD,
+	INCREMENTAL 
+} SP_KDTREE_SPLIT_METHOD;
+
+
+
 
 bool isLineComment(char* line){
 	//input: line in the config
@@ -432,7 +441,7 @@ bool assignvariablesfromConfig(SPConfig config){
 	char* line = (char*)malloc(sizeof(char)*1024);
 	char* ptr = line;
 	char* val, var;
-	int i = 0;
+	int i = 0, num;
 	int length;
 	size_t len = 1024;
 	ssize_t read;
@@ -498,7 +507,18 @@ bool assignvariablesfromConfig(SPConfig config){
 								config->spMinimalGUI = strcmp(val,"true") == 0 ? true : false;
 								break;
 							case 12:
-								config->spLoggerLevel = atoi(val);
+								if(strcmp(val,"1") == 0){
+									config->spLoggerLevel = SP_LOGGER_ERROR_LEVEL;
+								}
+								if(strcmp(val,"2") == 0){
+									config->spLoggerLevel = SP_LOGGER_WARNING_ERROR_LEVEL;
+								}
+								if(strcmp(val,"3") == 0){
+									config->spLoggerLevel = SP_LOGGER_INFO_WARNING_ERROR_LEVEL;
+								}
+								if(strcmp(val,"4") == 0){
+									config->spLoggerLevel = SP_LOGGER_DEBUG_INFO_WARNING_ERROR_LEVEL;
+								}
 								break;
 							case 13:
 								config->spLoggerFilename = (char*)malloc((sizeof(char)*length) + 1);
