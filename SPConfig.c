@@ -6,8 +6,29 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "SPConfig.h"
+
 #define MAX_LEN 1025 //1024 string including the terminating null character
+#define numberOfArguements 14 
+
 FILE* configFile;
+char* sysVarsControl[numberOfArguements] = {"spImagesDirectory","spImagesPrefix","spImagesSuffix","spNumOfImages","spPCADimension","spPCAFilename","spNumOfFeatures","spExtractionMode","spNumOfSimilarImages","spKDTreeSplitMethod","spKNN","spMinimalGUI","spLoggerLevel","spLoggerFilename" };
+int sysVarsFlag[numberOfArguements] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+int currentVarIndex;
+
+typedef enum sp_config_msg_t {
+	SP_CONFIG_MISSING_DIR,
+	SP_CONFIG_MISSING_PREFIX,
+	SP_CONFIG_MISSING_SUFFIX,
+	SP_CONFIG_MISSING_NUM_IMAGES,
+	SP_CONFIG_CANNOT_OPEN_FILE,
+	SP_CONFIG_ALLOC_FAIL,
+	SP_CONFIG_INVALID_INTEGER,
+	SP_CONFIG_INVALID_STRING,
+	SP_CONFIG_INVALID_ARGUMENT,
+	SP_CONFIG_INDEX_OUT_OF_RANGE,
+	SP_CONFIG_NOT_A_VARIABLE,
+	SP_CONFIG_SUCCESS
+} SP_CONFIG_MSG;
 
 /** A type used for defining the configuration file**/
 typedef struct sp_config_t{
@@ -27,6 +48,472 @@ typedef struct sp_config_t{
 	char* spLoggerFilename;
 }*SPConfig;
 
+bool isLineComment(char* line){
+	//input: line in the config
+	//output: checks if the line is a comment. return true if yes. false otherwise.
+	int i = 0;
+	while(line[i] == ' ' && i<strlen(line)){
+		i++;
+	}
+	if(line[i] == '#'){
+		return true;
+	}
+	return false;
+}
+
+bool isLineEmpty(char* line){
+	//input not a comment line
+	//output true if line is empty
+	int i = 0;
+	if(line[i] == '\n'){
+		return true;
+	}
+	while( i<strlen(line) && line[i] == ' '){
+		i++;
+	}
+	if(i == strlen(line)){ //the second condition is weird but it meant to work when line is uninitialized
+		return true;
+	}
+	return false;
+}
+
+bool spacesIsValid(char* line){
+	//input: not an empty line in the config, and not a comment
+	//output: true if the line has the right format
+	int i = 0;
+	int length = strlen(line);
+	while(i<length && line[i]==' '){
+		i++;
+	}
+	while(i<length && line[i]!=' ' && line[i]!='='){
+		i++;
+	}
+	if(i == length){
+		return false;
+	}
+	while(i<length && line[i] == ' '){
+		i++;
+	}
+	if(i == length){
+		return false;
+	}
+	if(line[i]!='='){
+		return false;
+	}
+	i++;
+	while(i<length && line[i] == ' '){
+		i++;
+	}
+	if(i == length){
+		return false;
+	}
+	while(i<length && line[i] != ' '){
+		i++;
+	}
+	if(i == length){
+		return true;
+	}
+	while(i<length && line[i] == ' '){
+		i++;
+	}
+	if(i == length){
+		return true;
+	}
+	if(line[i] !=' '){
+		return false;
+	}
+	return true;
+}
+
+char* getTheVariable(char* line){
+	//input: a valid spaces line from the config
+	//output: gets the variable name and returns it
+	int i = 0, length, start, end;
+	char* var;
+	while(line[i]==' '){
+		i++;
+	} 
+	start = i;
+	while(line[i]!=' ' && line[i] != '='){
+		i++;
+	}
+	end = i-1;
+	length = end + 1 - start;
+	var = (char*)malloc(length * sizeof(char) + 1);
+	if(var == NULL){
+		// -------------------------------------------
+		//printf("var alloc fail");
+		// -------------------------------------------
+		return NULL;
+	}
+	memcpy(var,&line[start],length);
+	var[length] = '\0';
+	/*
+	for(i = start; i <= end; i++){
+		var[i - start] = line[i];
+	}
+	var[i] = '\0';//not sure for that line
+	// ---------------------------
+	//	printf("the var is %s \n",var);
+	// ---------------------------
+	*/
+	return var;
+}
+
+bool checkTheVariableIsOk(char* var){
+	//input: gets a string representing an arguement
+	//output: check if it is one of the valid arguements. if yes return true. else return false.
+	int i;
+	for(i = 0; i < numberOfArguements; i++){
+		if(strcmp(var,sysVarsControl[i])==0){
+			// -------------------------
+			//printf("found the var in the control \n");
+			// -------------------------
+			sysVarsFlag[i] = 1;
+			currentVarIndex = i;
+			return true;
+		}
+	}
+	return false;
+}
+
+char* getTheValue(char* line){
+	//input: a line in the config file, that was checked for being valid
+	//output: get the value assigned in that line and return it as a string
+	int i = 0, length, start, end;
+	char* val;
+	while(line[i] != '='){
+		i++;
+	}
+	i++;
+	while(line[i] == ' '){
+		i++;
+	}
+	start = i;
+	while(i <strlen(line) && line[i] != ' ' && line[i] != '\n'){
+		i++;
+	}
+	length = i - start;
+	val = (char*)malloc((sizeof(char)*length) + 1);
+	memcpy(val, &line[start],length);
+	val[length] = '\0';
+	return val; 
+	/*
+	length = end + 1 - start;
+	val = (char*)malloc(length * sizeof(char)+1);
+	// ------------------------------------------------------
+	// NOT SURE IF TO DELETE LATER
+	if(val == NULL){
+		printf("malloc fail\n");
+		return NULL;
+	}
+	for(i = start; i <= end; i++){
+		// -------------------------------------------------
+		printf("%c \n", line[i]);
+//		printf("flag\n");
+//		printf("%d \n",(i-start));
+		// --------------------------------------------------
+		val[i-start] = line[i];
+	}
+	val[i] = '\0';
+	
+	// ----------------------------------
+	//printf("the length is %d",(int)strlen(val));
+	//printf("the value is %s", val);
+	//printf("1%s1",val);
+	// ----------------------------------
+	return val;
+	*/
+}
+
+SP_CONFIG_MSG checkTheValueIsOk(char* val){
+	//input: value
+	//output: SP_CONFIG_SUCCESS if the val holds the constraints
+	int num;
+	// ---------------------------------------------------------
+	//printf("current var index %d \n", currentVarIndex); //DELETE LATER
+	// ---------------------------------------------------------
+	switch(currentVarIndex){
+		case 0:
+			return SP_CONFIG_SUCCESS; // I add those lines because the default return is false.
+			break;
+		case 1:
+			return SP_CONFIG_SUCCESS;
+			break;
+		case 2:
+			// ------------------------------------------------------------
+			//printf("1%s1\n",val);
+			//printf("the val is %s \n", val);
+			//printf("the strcmp(.jpg,val) is %d \n", strcmp(val,".jpg"));
+			// ------------------------------------------------------------
+			if (strcmp(val,".jpg")!=0 && strcmp(val,".png")!=0 && strcmp(val,".bmp")!=0 && strcmp(val,".gif")!=0 ){
+				// -----------------------------
+				//printf("flagggggg"); // DELETE
+				// -----------------------------
+				return SP_CONFIG_INVALID_STRING;
+			}
+			else{
+				return SP_CONFIG_SUCCESS;
+			}
+			break;
+		case 3:
+			return atoi(val) > 0 ? SP_CONFIG_SUCCESS : SP_CONFIG_INVALID_INTEGER;
+			break;
+		case 4:
+			num = atoi(val);	
+			return num >= 10 && num <= 28 ? SP_CONFIG_SUCCESS : SP_CONFIG_INDEX_OUT_OF_RANGE; 
+			break;
+		case 5:
+			return SP_CONFIG_SUCCESS;
+			break;
+		case 6:
+			return atoi(val) > 0 ? SP_CONFIG_SUCCESS : SP_CONFIG_INVALID_INTEGER;
+			break;
+		case 7:
+			return strcmp(val,"true")==0 || strcmp(val,"false")==0 ? SP_CONFIG_SUCCESS : SP_CONFIG_INVALID_ARGUMENT;
+			break;
+		case 8:
+			return atoi(val) > 0 ? SP_CONFIG_SUCCESS : SP_CONFIG_INVALID_INTEGER;
+			break;
+		case 9:
+			return strcmp(val,"RANDOM")==0 || strcmp(val,"MAX_SPREAD")==0 || strcmp(val,"INCREMENTAL")==0 ? SP_CONFIG_SUCCESS : SP_CONFIG_INVALID_ARGUMENT; 
+			break;
+		case 10:
+			return atoi(val) > 0 ? SP_CONFIG_SUCCESS : SP_CONFIG_INVALID_INTEGER;
+			break;
+		case 11:
+			return strcmp(val,"true")==0 || strcmp(val,"false")==0 ? SP_CONFIG_SUCCESS : SP_CONFIG_INVALID_ARGUMENT;
+			break;
+		case 12:
+			return strcmp(val,"1")==0 || strcmp(val,"2")==0 || strcmp(val,"3")==0 || strcmp(val,"4")==0 ? SP_CONFIG_SUCCESS : SP_CONFIG_INDEX_OUT_OF_RANGE;
+			break;
+		case 13:
+			return SP_CONFIG_SUCCESS;
+			break;
+	}
+	return SP_CONFIG_INVALID_ARGUMENT;	
+}
+
+SP_CONFIG_MSG checkConstraints(char* line){
+	//input: a line that is not a comment, not an empty line, and has valid spaces (according to formmat)
+	//output: true if the constraints hold (the variable is valid, and the value holds the constraint)
+	
+	int i=0, length = strlen(line);
+	char* var;
+	char* val;
+	SP_CONFIG_MSG msg;
+	
+	var = getTheVariable(line);
+	if(var == NULL){
+		return SP_CONFIG_ALLOC_FAIL;
+	}
+	// ------------------------------
+	//printf("the var is %s \n", var);
+	// ------------------------------
+	if(!checkTheVariableIsOk(var)){
+		free(var);
+		return SP_CONFIG_NOT_A_VARIABLE;
+	}
+	val = getTheValue(line);
+	if(val == NULL){
+		return SP_CONFIG_ALLOC_FAIL;
+	}
+	msg = checkTheValueIsOk(val);
+	free(val);
+	free(var);
+	return msg;
+}
+
+SP_CONFIG_MSG checkLineIsValid(char* filename, char* line, int lineNumber){
+	//input: line in the config file
+	//output: appropriate enum msg. also prints an error if there is one
+	SP_CONFIG_MSG msg;
+	if(isLineEmpty(line)){
+		return SP_CONFIG_SUCCESS;
+	}
+	if(isLineComment(line)){
+		return SP_CONFIG_SUCCESS;
+	}	
+	if(!spacesIsValid(line)){
+		//guysFormatPrint(&filename,&(char)lineNumber,"Invalid configuration line",false);//check with guy what is the name of this function and change it!!!
+		printf("File: %s\nLine: %d\nMessage: Invalid configuration line\n", filename,lineNumber);
+		return SP_CONFIG_INVALID_ARGUMENT;
+	}
+	// -------------------------------
+	//printf("flag1\n"); //DELETE
+	//printf("the current var %d \n",currentVarIndex);
+	// -------------------------------
+	msg = checkConstraints(line);
+	if(msg != SP_CONFIG_SUCCESS){
+		// ------------------------------
+		//printf("flag2");
+		// ------------------------------ 
+		printf("File: %s\nLine: %d\nMessage: Invalid value - constraints not met\n", filename, lineNumber);
+		return SP_CONFIG_INVALID_ARGUMENT;
+	}
+	return msg;
+}
+
+SP_CONFIG_MSG checkTheNecessaryVarsControl(char* filename, int lineNumber){
+	//input: config name and line number
+	//output: appropriate enum msg. also prints an error if there is one
+	// ------------------------------------------
+	// delete this!
+	//int i = 0;
+	//printf("\n\n");
+	//for(i = 0; i < 14; i++){
+	//		printf("%d ", sysVarsFlag[i]);
+	//}
+	//printf("\n\n");
+	// ------------------------------------------
+	if(sysVarsFlag[0] == 0){
+		printf("File: %s\nLine: %d\nMessage: Parameter spImagesDirectory is not set\n", filename,lineNumber);
+		return SP_CONFIG_MISSING_DIR;
+	}
+	if(sysVarsFlag[1] == 0){
+		printf("File: %s\nLine: %d\nMessage: Parameter spImagesPrefix is not set\n", filename,lineNumber);
+		return SP_CONFIG_MISSING_PREFIX;
+	}
+	if(sysVarsFlag[2] == 0){
+		printf("File: %s\nLine: %d\nMessage: Parameter spImagesSuffix is not set\n", filename,lineNumber);
+		return SP_CONFIG_MISSING_SUFFIX;
+	}
+	if(sysVarsFlag[3] == 0){
+		printf("File: %s\nLine: %d\nMessage: Parameter spNumOfImages is not set\n",filename,lineNumber);
+		return SP_CONFIG_MISSING_NUM_IMAGES;
+	}
+	return SP_CONFIG_SUCCESS;
+}
+
+SP_CONFIG_MSG checkConfigFileValid(char* filename){
+	//input: gets a location of the file 
+	//output: checks if the config file is valid and return appropriate enum msg
+	char* line = (char*)malloc(sizeof(char)*1024);
+	char* ptr = line;
+	size_t len = 1024;
+	ssize_t read;
+	SP_CONFIG_MSG msg = SP_CONFIG_SUCCESS;
+	int rowCount = 0;//need it to print the line where there is an error.
+	
+	if(filename == NULL){
+		return SP_CONFIG_CANNOT_OPEN_FILE;
+	}
+
+	configFile = fopen(filename,"r");
+
+	if(configFile == NULL){
+		return SP_CONFIG_CANNOT_OPEN_FILE;
+	}
+
+	while((read = getline(&line,&len,configFile)) != -1){
+		// ------------------------------------------------------------------------------
+		//int m = 0;
+		//for(m = 0; m<14; m++){
+		//	printf(" %d ", sysVarsFlag[m]);
+		//}
+		//printf("\n");
+		//printf("the line is %s", line);//note to self!!!: DELETE THIS!!!
+		// -----------------------------------------------------------------------------
+		rowCount++;//the first line in the config file is 1
+		msg = checkLineIsValid(filename,line,rowCount);//also prints the regular msgs for the error. msgs number 1 or 2. (see the work instructions handed in class).
+		if(msg != SP_CONFIG_SUCCESS){
+			fclose(configFile);
+			free(ptr);
+			return msg;
+		}
+	}
+	free(ptr);
+	msg = checkTheNecessaryVarsControl(filename,rowCount);//also prints the regular msgs for the error. msgs 3 only. (see the work instructions handed in class).
+	fclose(configFile);
+	return msg;
+}
+
+bool assignvariablesfromConfig(SPConfig config){
+	char* line = (char*)malloc(sizeof(char)*1024);
+	char* ptr = line;
+	char* val, var;
+	int i = 0;
+	int length;
+	size_t len = 1024;
+	ssize_t read;
+	while((read = getline(&line,&len,configFile)) != -1){
+		if(!isLineEmpty(line)){
+			if(!isLineComment(line)){
+				val = getTheValue(line);			
+				var = getTheVariable(line);
+				for(i = 0; i < numberOfArguements; i++){
+					if(strcmp(sysVarsControl[i],var) == 0){
+						length = strlen(val)
+						switch(i){
+							case 0://need to check that the pointer is ok (the struct of SPConfig is pointer struct)
+								config->spImagesDirectory = (char*)malloc((sizeof(char)*length) + 1);
+								memcpy(config->spImagesDirectory, &val[0],length);
+								config->spImagesDirectory[length] = '\0';
+								break;
+							case 1:
+								config->spImagesPrefix = (char*)malloc((sizeof(char)*length) + 1);
+								memcpy(config->spImagesPrefix, &val[0],length);
+								config->spImagesPrefix[length] = '\0';
+								break;
+							case 2:
+								config->spImagesSuffix = (char*)malloc((sizeof(char)*length) + 1);
+								memcpy(config->spImagesSuffix, &val[0],length);
+								config->spImagesSuffix[length] = '\0';
+								break;
+							case 3:
+								config->spNumOfImages = atoi(val);
+								break;
+							case 4:
+								config->spPCADimension = atoi(val);
+								break;
+							case 5:
+								config->spPCAFilename = (char*)malloc((sizeof(char)*length) + 1);
+								memcpy(config->spPCAFilename, &val[0],length);
+								config->spPCAFilename[length] = '\0';
+								break;
+							case 6:
+								config->spNumOfFeatures = atoi(val);
+								break;
+							case 7:
+								config->spExtractionMode = strcmp(val,"true") == 0 ? true : false; //notice that it is case sensitive
+								break;
+							case 8:
+								config->spNumOfSimilarImages = atoi(val);
+								break;
+							case 9:
+								if(strcmp(val,"RANDOM") == 0){
+									config->spKDTreeSplitMethod = RANDOM;
+								}
+								if(strcmp(val," MAX_SPREAD") == 0){
+									config->spKDTreeSplitMethod =  MAX_SPREAD;
+								}
+								if(strcmp(val,"INCREMENTAL") == 0){
+									config->spKDTreeSplitMethod = INCREMENTAL;
+								}
+								break;
+							case 10:
+								config->spKNN = atoi(val);
+								break;
+							case 11:
+								config->spMinimalGUI = strcmp(val,"true") == 0 ? true : false;
+								break;
+							case 12:
+								config->spLoggerLevel = atoi(val);
+								break;
+							case 13:
+								config->spLoggerFilename = (char*)malloc((sizeof(char)*length) + 1);
+								memcpy(config->spLoggerFilename, &val[0],length);
+								config->spLoggerFilename[length] = '\0';
+								break;
+						}			
+					}	
+				}
+			}
+		}
+	}
+	fclose(configFile);
+	free(ptr);
+}
 
 /**
  * Creates a new system configuration struct. The configuration struct
@@ -67,14 +554,18 @@ SPConfig spConfigCreate(const char* filename, SP_CONFIG_MSG* msg){
 		*msg = SP_CONFIG_INVALID_ARGUMENT;
 	else{
 	configFile = fopen(filename, "r");
+<<<<<<< HEAD
 	if (!configFile)
 		*msg = SP_CONFIG_CANNOT_OPEN_FILE;
 	}
 
 
 //	*msg = checkConfigFileValid(configFile); // Viktor will complete
+=======
+	checkConfigFileValid(); // completed
+>>>>>>> origin/master
 	if (*msg != SP_CONFIG_SUCCESS)
-		spConfigDestroy(config);//correct??
+		spConfigDestroy(config);//correct?? vik:YES 
 
 //  initializing if needed, depends on AssignvariablesfromConfig()
 //	config->spImagesDirectory;
@@ -92,9 +583,15 @@ SPConfig spConfigCreate(const char* filename, SP_CONFIG_MSG* msg){
 //	config->spLoggerLevel = 3;
 //	config->spLoggerFilename = stdout;
 
+<<<<<<< HEAD
 //	AssignvariablesfromConfig(); //Viktor: including msg (ex. info msg "used default value "20" for spPCADimension")
 	if(configFile)
 		fclose(configFile);
+=======
+	AssignvariablesfromConfig(config); //Viktor: including msg (ex. info msg "used default value "20" for spPCADimension")
+
+	fclose(configFile);
+>>>>>>> origin/master
 	return config;
 }
 
