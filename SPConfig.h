@@ -26,6 +26,8 @@ typedef enum sp_config_msg_t {
 
 typedef struct sp_config_t* SPConfig;
 
+SPConfig publicConfig;
+
 /**
  * Creates a new system configuration struct. The configuration struct
  * is initialized based on the configuration file given by 'filename'.
