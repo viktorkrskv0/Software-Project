@@ -15,6 +15,13 @@ char* sysVarsControl[numberOfArguements] = {"spImagesDirectory","spImagesPrefix"
 int sysVarsFlag[numberOfArguements] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 int currentVarIndex;
 
+typedef enum sp_kdtree_split_method {
+	RANDOM,
+	MAX_SPREAD,
+	INCREMENTAL
+} SP_KDTREE_SPLIT_METHOD;
+
+
 /** A type used for defining the configuration file**/
 typedef struct sp_config_t{
 	char* spImagesDirectory;
@@ -26,18 +33,13 @@ typedef struct sp_config_t{
 	int spNumOfFeatures;
 	bool spExtractionMode;
 	int spNumOfSimilarImages;
-	enum spKDTreeSplitMethod;
+	SP_KDTREE_SPLIT_METHOD spKDTreeSplitMethod;
 	int spKNN;
 	bool spMinimalGUI;
 	SP_LOGGER_LEVEL spLoggerLevel;
 	char* spLoggerFilename;
 }*SPConfig;
 
-typedef enum sp_kdtree_split_method {
-	RANDOM,
-	MAX_SPREAD,
-	INCREMENTAL 
-} SP_KDTREE_SPLIT_METHOD;
 
 
 
@@ -422,11 +424,12 @@ SP_CONFIG_MSG checkConfigFileValid(char* filename){
 	return msg;
 }
 
-bool assignvariablesfromConfig(SPConfig config){
+void assignvariablesfromConfig(SPConfig config){
 	char* line = (char*)malloc(sizeof(char)*1024);
 	char* ptr = line;
-	char* val, var;
-	int i = 0, num;
+	char* val;
+	char* var;
+	int i = 0;
 	int length;
 	size_t len = 1024;
 	ssize_t read;
@@ -559,16 +562,12 @@ SPConfig spConfigCreate(const char* filename, SP_CONFIG_MSG* msg){
 		*msg = SP_CONFIG_INVALID_ARGUMENT;
 	else{
 	configFile = fopen(filename, "r");
-<<<<<<< HEAD
 	if (!configFile)
 		*msg = SP_CONFIG_CANNOT_OPEN_FILE;
 	}
 
 
-//	*msg = checkConfigFileValid(configFile); // Viktor will complete
-=======
-	checkConfigFileValid(); // completed
->>>>>>> origin/master
+	*msg = checkConfigFileValid(filename); // Viktor will complete
 	if (*msg != SP_CONFIG_SUCCESS)
 		spConfigDestroy(config);//correct?? vik:YES 
 
@@ -588,15 +587,13 @@ SPConfig spConfigCreate(const char* filename, SP_CONFIG_MSG* msg){
 //	config->spLoggerLevel = 3;
 //	config->spLoggerFilename = stdout;
 
-<<<<<<< HEAD
 //	AssignvariablesfromConfig(); //Viktor: including msg (ex. info msg "used default value "20" for spPCADimension")
 	if(configFile)
 		fclose(configFile);
-=======
+	
 	AssignvariablesfromConfig(config); //Viktor: including msg (ex. info msg "used default value "20" for spPCADimension")
 
 	fclose(configFile);
->>>>>>> origin/master
 	return config;
 }
 
