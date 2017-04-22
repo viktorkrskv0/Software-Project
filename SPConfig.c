@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <sys/types.h>
 #include "SPConfig.h"
 
 #define MAX_LEN 1025 //1024 string including the terminating null character
@@ -41,8 +42,58 @@ typedef struct sp_config_t{
 }*SPConfig;
 
 
+//needed only for debuggin - since we work on windows and here we need to write a new "getline"
+size_t getline(char **lineptr, size_t *n, FILE *stream) {
+    char *bufptr = NULL;
+    char *p = bufptr;
+    size_t size;
+    int c;
 
+    if (lineptr == NULL) {
+        return -1;
+    }
+    if (stream == NULL) {
+        return -1;
+    }
+    if (n == NULL) {
+        return -1;
+    }
+    bufptr = *lineptr;
+    size = *n;
 
+    c = fgetc(stream);
+    if (c == EOF) {
+        return -1;
+    }
+    if (bufptr == NULL) {
+        bufptr = malloc(128);
+        if (bufptr == NULL) {
+            return -1;
+        }
+        size = 128;
+    }
+    p = bufptr;
+    while(c != EOF) {
+        if ((p - bufptr) > (size - 1)) {
+            size = size + 128;
+            bufptr = realloc(bufptr, size);
+            if (bufptr == NULL) {
+                return -1;
+            }
+        }
+        *p++ = c;
+        if (c == '\n') {
+            break;
+        }
+        c = fgetc(stream);
+    }
+
+    *p++ = '\0';
+    *lineptr = bufptr;
+    *n = size;
+
+    return p - bufptr - 1;
+}
 
 bool isLineComment(char* line){
 	//input: line in the config
@@ -176,7 +227,7 @@ bool checkTheVariableIsOk(char* var){
 char* getTheValue(char* line){
 	//input: a line in the config file, that was checked for being valid
 	//output: get the value assigned in that line and return it as a string
-	int i = 0, length, start, end;
+	int i = 0, length, start;
 	char* val;
 	while(line[i] != '='){
 		i++;
@@ -294,7 +345,6 @@ SP_CONFIG_MSG checkConstraints(char* line){
 	//input: a line that is not a comment, not an empty line, and has valid spaces (according to formmat)
 	//output: true if the constraints hold (the variable is valid, and the value holds the constraint)
 	
-	int i=0, length = strlen(line);
 	char* var;
 	char* val;
 	SP_CONFIG_MSG msg;
@@ -320,7 +370,7 @@ SP_CONFIG_MSG checkConstraints(char* line){
 	return msg;
 }
 
-SP_CONFIG_MSG checkLineIsValid(char* filename, char* line, int lineNumber){
+SP_CONFIG_MSG checkLineIsValid(const char* filename, char* line, int lineNumber){
 	//input: line in the config file
 	//output: appropriate enum msg. also prints an error if there is one
 	SP_CONFIG_MSG msg;
@@ -345,12 +395,12 @@ SP_CONFIG_MSG checkLineIsValid(char* filename, char* line, int lineNumber){
 		//printf("flag2");
 		// ------------------------------ 
 		printf("File: %s\nLine: %d\nMessage: Invalid value - constraints not met\n", filename, lineNumber);
-		return SP_CONFIG_INVALID_ARGUMENT;
+		return msg;
 	}
 	return msg;
 }
 
-SP_CONFIG_MSG checkTheNecessaryVarsControl(char* filename, int lineNumber){
+SP_CONFIG_MSG checkTheNecessaryVarsControl(const char* filename, int lineNumber){
 	//input: config name and line number
 	//output: appropriate enum msg. also prints an error if there is one
 	// ------------------------------------------
@@ -381,7 +431,7 @@ SP_CONFIG_MSG checkTheNecessaryVarsControl(char* filename, int lineNumber){
 	return SP_CONFIG_SUCCESS;
 }
 
-SP_CONFIG_MSG checkConfigFileValid(char* filename){
+SP_CONFIG_MSG checkConfigFileValid(const char* filename){
 	//input: gets a location of the file 
 	//output: checks if the config file is valid and return appropriate enum msg
 	char* line = (char*)malloc(sizeof(char)*1024);
@@ -425,6 +475,16 @@ SP_CONFIG_MSG checkConfigFileValid(char* filename){
 }
 
 void assignvariablesfromConfig(SPConfig config){
+	config->spPCADimension = 20;
+	config->spPCAFilename = "pca.yml";
+	config->spNumOfFeatures = 100;
+	config->spExtractionMode = true;
+	config->spNumOfSimilarImages = 1;
+	config->spKDTreeSplitMethod = MAX_SPREAD;
+	config->spKNN = 1;
+	config->spMinimalGUI = false;
+	config->spLoggerLevel = 3;
+	config->spLoggerFilename = "stdout";
 	char* line = (char*)malloc(sizeof(char)*1024);
 	char* ptr = line;
 	char* val;
@@ -521,6 +581,7 @@ void assignvariablesfromConfig(SPConfig config){
 	}
 	fclose(configFile);
 	free(ptr);
+	printf("%d 2 %d 3", config->spNumOfImages, config->spNumOfFeatures);
 }
 
 /**
@@ -558,42 +619,32 @@ SPConfig spConfigCreate(const char* filename, SP_CONFIG_MSG* msg){
 		return NULL;
 	}
 
-	if (!filename)
+	//verify there's a file name
+	if (!filename){
 		*msg = SP_CONFIG_INVALID_ARGUMENT;
-	else{
-	configFile = fopen(filename, "r");
-	if (!configFile)
-		*msg = SP_CONFIG_CANNOT_OPEN_FILE;
+		return config;
 	}
 
+	//verify file opens
+	configFile = fopen(filename, "r");
+	if (!configFile){
+		*msg = SP_CONFIG_CANNOT_OPEN_FILE;
+		return config;
+	}
 
-	*msg = checkConfigFileValid(filename); // Viktor will complete
-	if (*msg != SP_CONFIG_SUCCESS)
-		spConfigDestroy(config);//correct?? vik:YES 
+	//verify file is valid
+	*msg = checkConfigFileValid(filename);
+	if (*msg != SP_CONFIG_SUCCESS){
+		spConfigDestroy(config);
+		return config;
+	}
 
-//  initializing if needed, depends on AssignvariablesfromConfig()
-//	config->spImagesDirectory;
-//	config->spImagesPrefix;
-//	config->spImagesSuffix;
-//	config->spNumOfImages;
-//	config->spPCADimension = 20;
-//	config->spPCAFilename = pca.yml;
-//	config->spNumOfFeatures = 100;
-//	config->spExtractionMode = true;
-//	config->spNumOfSimilarImages = 1;
-//	config->spKDTreeSplitMethod = MAX_SPREAD;
-//	config->spKNN = 1;
-//	config->spMinimalGUI = false;
-//	config->spLoggerLevel = 3;
-//	config->spLoggerFilename = stdout;
+	//if all works - get the variables
+	assignvariablesfromConfig(config); //Viktor: including msg (ex. info msg "used default value "20" for spPCADimension")
 
-//	AssignvariablesfromConfig(); //Viktor: including msg (ex. info msg "used default value "20" for spPCADimension")
 	if(configFile)
 		fclose(configFile);
-	
-	AssignvariablesfromConfig(config); //Viktor: including msg (ex. info msg "used default value "20" for spPCADimension")
 
-	fclose(configFile);
 	return config;
 }
 
@@ -664,6 +715,7 @@ int spConfigGetNumOfImages(const SPConfig config, SP_CONFIG_MSG* msg){
 		*msg = SP_CONFIG_INVALID_ARGUMENT;
 		return -1;
 	}
+	printf("%d 1", config->spNumOfImages);
 	return config->spNumOfImages;
 }
 
