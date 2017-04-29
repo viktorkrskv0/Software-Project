@@ -31,10 +31,12 @@ int main(int argc, char** argv){
 	IsLoggerErrExit
 
 	// B3: features //Vik to verify
+	int size;
 	if (config->spExtractionMode)
-		spExtract(config, Cmsg); //including verifying DONE and saving to directory
-	else //maybe anyway?
-		extractFromFiles(config, Cmsg);
+		size = spExtract(config, Cmsg); //including verifying DONE and saving to directory
+	SPPoint** arr = (SPPoint**)malloc((SPPoint*)*size);
+	
+	Init(arr,size);//inits the kdTree
 	IsConfigErrExit
 	initDataStructures(config, Cmsg);
 	IsConfigErrExit
