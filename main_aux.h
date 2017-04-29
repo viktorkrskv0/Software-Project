@@ -22,4 +22,19 @@ bool manageLMSG(SP_LOGGER_MSG* Smsg);
 
 void freeAll(SPConfig config, SPLogger logger);
 
+
+/*
+ * this function is activated when we are in extraction mode
+ * it takes all the pictures, and extracts the features
+ * into the appropriate files. img1.jpg feats to feats1
+ * img2.jpg to feats2 and so on.
+ *
+ * @param -
+ *
+ * @return - void. creates feats files, and extract to them
+ * the featurs.
+ *
+ * */
+void spExtract();
+
 #endif /* MAIN_AUX_H_ */
