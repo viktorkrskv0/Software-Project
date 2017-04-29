@@ -35,6 +35,6 @@ void freeAll(SPConfig config, SPLogger logger);
  * the featurs.
  *
  * */
-void spExtract();
+int spExtract();
 
 #endif /* MAIN_AUX_H_ */
