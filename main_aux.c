@@ -33,3 +33,35 @@ void freeAll(SPConfig config, SPLogger logger){
 	spConfigDestroy(config);
 	spLoggerDestroy(logger);
 }
+
+void spExtract(){
+	FILE* f;
+	int size = 0;
+	int i = 0;
+	int j;
+	int l = publicConfig->spNumOfImages;
+	int* numOfFeatures;
+	SPPoint** tmpFeats;
+	char* address;
+	char* featAddress;
+	ImageProc(publicConfig);
+		for(i = 0; i < l; i++){
+			address = buildAddress(i);
+			tmpFeats = getImageFeatures(address,i,numOfFeatures);//need to destroy that
+			free(address);
+			size = size + *numOfFeatures;
+			//open a new file:
+			featAddress = buildFeatAddress(i);
+			f = fopen(featAddress,"w+");
+			free(featAddress);
+			//write everything to a file:
+			writeFeatsToFile(f,tmpFeats,i, *numOfFeatures);
+			//--------------------------------------------------------------
+				for(i = 0; i < *numOfFeatures; i++){
+					spPointDestroy(tmpFeats[i]);
+			}
+	//--------------------------------------------------------------
+	free(tmpFeats);//not sure about this solution as it is ineffective but the best i came up with
+	fclose(f);
+	}
+}
