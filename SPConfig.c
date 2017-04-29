@@ -44,55 +44,55 @@ typedef struct sp_config_t{
 
 //needed only for debuggin - since we work on windows and here we need to write a new "getline"
 size_t getline(char **lineptr, size_t *n, FILE *stream) {
-    char *bufptr = NULL;
-    char *p = bufptr;
-    size_t size;
-    int c;
+	char *bufptr = NULL;
+	char *p = bufptr;
+	size_t size;
+	int c;
 
-    if (lineptr == NULL) {
-        return -1;
-    }
-    if (stream == NULL) {
-        return -1;
-    }
-    if (n == NULL) {
-        return -1;
-    }
-    bufptr = *lineptr;
-    size = *n;
+	if (lineptr == NULL) {
+		return -1;
+	}
+	if (stream == NULL) {
+		return -1;
+	}
+	if (n == NULL) {
+		return -1;
+	}
+	bufptr = *lineptr;
+	size = *n;
 
-    c = fgetc(stream);
-    if (c == EOF) {
-        return -1;
-    }
-    if (bufptr == NULL) {
-        bufptr = malloc(128);
-        if (bufptr == NULL) {
-            return -1;
-        }
-        size = 128;
-    }
-    p = bufptr;
-    while(c != EOF) {
-        if ((p - bufptr) > (size - 1)) {
-            size = size + 128;
-            bufptr = realloc(bufptr, size);
-            if (bufptr == NULL) {
-                return -1;
-            }
-        }
-        *p++ = c;
-        if (c == '\n') {
-            break;
-        }
-        c = fgetc(stream);
-    }
+	c = fgetc(stream);
+	if (c == EOF) {
+		return -1;
+	}
+	if (bufptr == NULL) {
+		bufptr = malloc(128);
+		if (bufptr == NULL) {
+			return -1;
+		}
+		size = 128;
+	}
+	p = bufptr;
+	while(c != EOF) {
+		if ((p - bufptr) > (size - 1)) {
+			size = size + 128;
+			bufptr = realloc(bufptr, size);
+			if (bufptr == NULL) {
+				return -1;
+			}
+		}
+		*p++ = c;
+		if (c == '\n') {
+			break;
+		}
+		c = fgetc(stream);
+	}
 
-    *p++ = '\0';
-    *lineptr = bufptr;
-    *n = size;
+	*p++ = '\0';
+	*lineptr = bufptr;
+	*n = size;
 
-    return p - bufptr - 1;
+	return p - bufptr - 1;
 }
 
 bool isLineComment(char* line){
@@ -203,7 +203,7 @@ char* getTheVariable(char* line){
 	// ---------------------------
 	//	printf("the var is %s \n",var);
 	// ---------------------------
-	*/
+	 */
 	return var;
 }
 
@@ -263,14 +263,14 @@ char* getTheValue(char* line){
 		val[i-start] = line[i];
 	}
 	val[i] = '\0';
-	
+
 	// ----------------------------------
 	//printf("the length is %d",(int)strlen(val));
 	//printf("the value is %s", val);
 	//printf("1%s1",val);
 	// ----------------------------------
 	return val;
-	*/
+	 */
 }
 
 SP_CONFIG_MSG checkTheValueIsOk(char* val){
@@ -281,62 +281,62 @@ SP_CONFIG_MSG checkTheValueIsOk(char* val){
 	//printf("current var index %d \n", currentVarIndex); //DELETE LATER
 	// ---------------------------------------------------------
 	switch(currentVarIndex){
-		case 0:
-			return SP_CONFIG_SUCCESS; // I add those lines because the default return is false.
-			break;
-		case 1:
+	case 0:
+		return SP_CONFIG_SUCCESS; // I add those lines because the default return is false.
+		break;
+	case 1:
+		return SP_CONFIG_SUCCESS;
+		break;
+	case 2:
+		// ------------------------------------------------------------
+		//printf("1%s1\n",val);
+		//printf("the val is %s \n", val);
+		//printf("the strcmp(.jpg,val) is %d \n", strcmp(val,".jpg"));
+		// ------------------------------------------------------------
+		if (strcmp(val,".jpg")!=0 && strcmp(val,".png")!=0 && strcmp(val,".bmp")!=0 && strcmp(val,".gif")!=0 ){
+			// -----------------------------
+			//printf("flagggggg"); // DELETE
+			// -----------------------------
+			return SP_CONFIG_INVALID_STRING;
+		}
+		else{
 			return SP_CONFIG_SUCCESS;
-			break;
-		case 2:
-			// ------------------------------------------------------------
-			//printf("1%s1\n",val);
-			//printf("the val is %s \n", val);
-			//printf("the strcmp(.jpg,val) is %d \n", strcmp(val,".jpg"));
-			// ------------------------------------------------------------
-			if (strcmp(val,".jpg")!=0 && strcmp(val,".png")!=0 && strcmp(val,".bmp")!=0 && strcmp(val,".gif")!=0 ){
-				// -----------------------------
-				//printf("flagggggg"); // DELETE
-				// -----------------------------
-				return SP_CONFIG_INVALID_STRING;
-			}
-			else{
-				return SP_CONFIG_SUCCESS;
-			}
-			break;
-		case 3:
-			return atoi(val) > 0 ? SP_CONFIG_SUCCESS : SP_CONFIG_INVALID_INTEGER;
-			break;
-		case 4:
-			num = atoi(val);	
-			return num >= 10 && num <= 28 ? SP_CONFIG_SUCCESS : SP_CONFIG_INDEX_OUT_OF_RANGE; 
-			break;
-		case 5:
-			return SP_CONFIG_SUCCESS;
-			break;
-		case 6:
-			return atoi(val) > 0 ? SP_CONFIG_SUCCESS : SP_CONFIG_INVALID_INTEGER;
-			break;
-		case 7:
-			return strcmp(val,"true")==0 || strcmp(val,"false")==0 ? SP_CONFIG_SUCCESS : SP_CONFIG_INVALID_ARGUMENT;
-			break;
-		case 8:
-			return atoi(val) > 0 ? SP_CONFIG_SUCCESS : SP_CONFIG_INVALID_INTEGER;
-			break;
-		case 9:
-			return strcmp(val,"RANDOM")==0 || strcmp(val,"MAX_SPREAD")==0 || strcmp(val,"INCREMENTAL")==0 ? SP_CONFIG_SUCCESS : SP_CONFIG_INVALID_ARGUMENT; 
-			break;
-		case 10:
-			return atoi(val) > 0 ? SP_CONFIG_SUCCESS : SP_CONFIG_INVALID_INTEGER;
-			break;
-		case 11:
-			return strcmp(val,"true")==0 || strcmp(val,"false")==0 ? SP_CONFIG_SUCCESS : SP_CONFIG_INVALID_ARGUMENT;
-			break;
-		case 12:
-			return strcmp(val,"1")==0 || strcmp(val,"2")==0 || strcmp(val,"3")==0 || strcmp(val,"4")==0 ? SP_CONFIG_SUCCESS : SP_CONFIG_INDEX_OUT_OF_RANGE;
-			break;
-		case 13:
-			return SP_CONFIG_SUCCESS;
-			break;
+		}
+		break;
+	case 3:
+		return atoi(val) > 0 ? SP_CONFIG_SUCCESS : SP_CONFIG_INVALID_INTEGER;
+		break;
+	case 4:
+		num = atoi(val);
+		return num >= 10 && num <= 28 ? SP_CONFIG_SUCCESS : SP_CONFIG_INDEX_OUT_OF_RANGE;
+		break;
+	case 5:
+		return SP_CONFIG_SUCCESS;
+		break;
+	case 6:
+		return atoi(val) > 0 ? SP_CONFIG_SUCCESS : SP_CONFIG_INVALID_INTEGER;
+		break;
+	case 7:
+		return strcmp(val,"true")==0 || strcmp(val,"false")==0 ? SP_CONFIG_SUCCESS : SP_CONFIG_INVALID_ARGUMENT;
+		break;
+	case 8:
+		return atoi(val) > 0 ? SP_CONFIG_SUCCESS : SP_CONFIG_INVALID_INTEGER;
+		break;
+	case 9:
+		return strcmp(val,"RANDOM")==0 || strcmp(val,"MAX_SPREAD")==0 || strcmp(val,"INCREMENTAL")==0 ? SP_CONFIG_SUCCESS : SP_CONFIG_INVALID_ARGUMENT;
+		break;
+	case 10:
+		return atoi(val) > 0 ? SP_CONFIG_SUCCESS : SP_CONFIG_INVALID_INTEGER;
+		break;
+	case 11:
+		return strcmp(val,"true")==0 || strcmp(val,"false")==0 ? SP_CONFIG_SUCCESS : SP_CONFIG_INVALID_ARGUMENT;
+		break;
+	case 12:
+		return strcmp(val,"1")==0 || strcmp(val,"2")==0 || strcmp(val,"3")==0 || strcmp(val,"4")==0 ? SP_CONFIG_SUCCESS : SP_CONFIG_INDEX_OUT_OF_RANGE;
+		break;
+	case 13:
+		return SP_CONFIG_SUCCESS;
+		break;
 	}
 	return SP_CONFIG_INVALID_ARGUMENT;	
 }
@@ -344,11 +344,11 @@ SP_CONFIG_MSG checkTheValueIsOk(char* val){
 SP_CONFIG_MSG checkConstraints(char* line){
 	//input: a line that is not a comment, not an empty line, and has valid spaces (according to formmat)
 	//output: true if the constraints hold (the variable is valid, and the value holds the constraint)
-	
+
 	char* var;
 	char* val;
 	SP_CONFIG_MSG msg;
-	
+
 	var = getTheVariable(line);
 	if(var == NULL){
 		return SP_CONFIG_ALLOC_FAIL;
@@ -440,7 +440,7 @@ SP_CONFIG_MSG checkConfigFileValid(const char* filename){
 	ssize_t read;
 	SP_CONFIG_MSG msg = SP_CONFIG_SUCCESS;
 	int rowCount = 0;//need it to print the line where there is an error.
-	
+
 	if(filename == NULL){
 		return SP_CONFIG_CANNOT_OPEN_FILE;
 	}
@@ -502,77 +502,77 @@ void assignvariablesfromConfig(SPConfig config){
 					if(strcmp(sysVarsControl[i],var) == 0){
 						length = strlen(val);
 						switch(i){
-							case 0://need to check that the pointer is ok (the struct of SPConfig is pointer struct)
-								config->spImagesDirectory = (char*)malloc((sizeof(char)*length) + 1);
-								memcpy(config->spImagesDirectory, &val[0],length);
-								config->spImagesDirectory[length] = '\0';
-								break;
-							case 1:
-								config->spImagesPrefix = (char*)malloc((sizeof(char)*length) + 1);
-								memcpy(config->spImagesPrefix, &val[0],length);
-								config->spImagesPrefix[length] = '\0';
-								break;
-							case 2:
-								config->spImagesSuffix = (char*)malloc((sizeof(char)*length) + 1);
-								memcpy(config->spImagesSuffix, &val[0],length);
-								config->spImagesSuffix[length] = '\0';
-								break;
-							case 3:
-								config->spNumOfImages = atoi(val);
-								break;
-							case 4:
-								config->spPCADimension = atoi(val);
-								break;
-							case 5:
-								config->spPCAFilename = (char*)malloc((sizeof(char)*length) + 1);
-								memcpy(config->spPCAFilename, &val[0],length);
-								config->spPCAFilename[length] = '\0';
-								break;
-							case 6:
-								config->spNumOfFeatures = atoi(val);
-								break;
-							case 7:
-								config->spExtractionMode = strcmp(val,"true") == 0 ? true : false; //notice that it is case sensitive
-								break;
-							case 8:
-								config->spNumOfSimilarImages = atoi(val);
-								break;
-							case 9:
-								if(strcmp(val,"RANDOM") == 0){
-									config->spKDTreeSplitMethod = RANDOM;
-								}
-								if(strcmp(val," MAX_SPREAD") == 0){
-									config->spKDTreeSplitMethod =  MAX_SPREAD;
-								}
-								if(strcmp(val,"INCREMENTAL") == 0){
-									config->spKDTreeSplitMethod = INCREMENTAL;
-								}
-								break;
-							case 10:
-								config->spKNN = atoi(val);
-								break;
-							case 11:
-								config->spMinimalGUI = strcmp(val,"true") == 0 ? true : false;
-								break;
-							case 12:
-								if(strcmp(val,"1") == 0){
-									config->spLoggerLevel = SP_LOGGER_ERROR_LEVEL;
-								}
-								if(strcmp(val,"2") == 0){
-									config->spLoggerLevel = SP_LOGGER_WARNING_ERROR_LEVEL;
-								}
-								if(strcmp(val,"3") == 0){
-									config->spLoggerLevel = SP_LOGGER_INFO_WARNING_ERROR_LEVEL;
-								}
-								if(strcmp(val,"4") == 0){
-									config->spLoggerLevel = SP_LOGGER_DEBUG_INFO_WARNING_ERROR_LEVEL;
-								}
-								break;
-							case 13:
-								config->spLoggerFilename = (char*)malloc((sizeof(char)*length) + 1);
-								memcpy(config->spLoggerFilename, &val[0],length);
-								config->spLoggerFilename[length] = '\0';
-								break;
+						case 0://need to check that the pointer is ok (the struct of SPConfig is pointer struct)
+							config->spImagesDirectory = (char*)malloc((sizeof(char)*length) + 1);
+							memcpy(config->spImagesDirectory, &val[0],length);
+							config->spImagesDirectory[length] = '\0';
+							break;
+						case 1:
+							config->spImagesPrefix = (char*)malloc((sizeof(char)*length) + 1);
+							memcpy(config->spImagesPrefix, &val[0],length);
+							config->spImagesPrefix[length] = '\0';
+							break;
+						case 2:
+							config->spImagesSuffix = (char*)malloc((sizeof(char)*length) + 1);
+							memcpy(config->spImagesSuffix, &val[0],length);
+							config->spImagesSuffix[length] = '\0';
+							break;
+						case 3:
+							config->spNumOfImages = atoi(val);
+							break;
+						case 4:
+							config->spPCADimension = atoi(val);
+							break;
+						case 5:
+							config->spPCAFilename = (char*)malloc((sizeof(char)*length) + 1);
+							memcpy(config->spPCAFilename, &val[0],length);
+							config->spPCAFilename[length] = '\0';
+							break;
+						case 6:
+							config->spNumOfFeatures = atoi(val);
+							break;
+						case 7:
+							config->spExtractionMode = strcmp(val,"true") == 0 ? true : false; //notice that it is case sensitive
+							break;
+						case 8:
+							config->spNumOfSimilarImages = atoi(val);
+							break;
+						case 9:
+							if(strcmp(val,"RANDOM") == 0){
+								config->spKDTreeSplitMethod = RANDOM;
+							}
+							if(strcmp(val," MAX_SPREAD") == 0){
+								config->spKDTreeSplitMethod =  MAX_SPREAD;
+							}
+							if(strcmp(val,"INCREMENTAL") == 0){
+								config->spKDTreeSplitMethod = INCREMENTAL;
+							}
+							break;
+						case 10:
+							config->spKNN = atoi(val);
+							break;
+						case 11:
+							config->spMinimalGUI = strcmp(val,"true") == 0 ? true : false;
+							break;
+						case 12:
+							if(strcmp(val,"1") == 0){
+								config->spLoggerLevel = SP_LOGGER_ERROR_LEVEL;
+							}
+							if(strcmp(val,"2") == 0){
+								config->spLoggerLevel = SP_LOGGER_WARNING_ERROR_LEVEL;
+							}
+							if(strcmp(val,"3") == 0){
+								config->spLoggerLevel = SP_LOGGER_INFO_WARNING_ERROR_LEVEL;
+							}
+							if(strcmp(val,"4") == 0){
+								config->spLoggerLevel = SP_LOGGER_DEBUG_INFO_WARNING_ERROR_LEVEL;
+							}
+							break;
+						case 13:
+							config->spLoggerFilename = (char*)malloc((sizeof(char)*length) + 1);
+							memcpy(config->spLoggerFilename, &val[0],length);
+							config->spLoggerFilename[length] = '\0';
+							break;
 						}			
 					}	
 				}
@@ -608,12 +608,11 @@ void assignvariablesfromConfig(SPConfig config){
  *
  *
  */
-SPConfig spConfigCreate(const char* filename, SP_CONFIG_MSG* msg){
-	assert (msg);  //launch err
+SPConfig* spConfigCreate(const char* filename, SP_CONFIG_MSG* msg){
+	assert (msg);
 
 	//malloc
-	SPConfig config;
-	config = (SPConfig)malloc(sizeof(config));
+	SPConfig config = (SPConfig)malloc(sizeof(config));
 	if (!config){
 		*msg = SP_CONFIG_ALLOC_FAIL;
 		return NULL;
@@ -622,21 +621,23 @@ SPConfig spConfigCreate(const char* filename, SP_CONFIG_MSG* msg){
 	//verify there's a file name
 	if (!filename){
 		*msg = SP_CONFIG_INVALID_ARGUMENT;
-		return config;
+		spConfigDestroy(config);
+		return NULL;
 	}
 
 	//verify file opens
 	configFile = fopen(filename, "r");
 	if (!configFile){
 		*msg = SP_CONFIG_CANNOT_OPEN_FILE;
-		return config;
+		spConfigDestroy(config);
+		return NULL;
 	}
 
 	//verify file is valid
 	*msg = checkConfigFileValid(filename);
 	if (*msg != SP_CONFIG_SUCCESS){
 		spConfigDestroy(config);
-		return config;
+		return NULL;
 	}
 
 	//if all works - get the variables
@@ -645,7 +646,7 @@ SPConfig spConfigCreate(const char* filename, SP_CONFIG_MSG* msg){
 	if(configFile)
 		fclose(configFile);
 
-	return config;
+	return &config;
 }
 
 
@@ -846,14 +847,26 @@ SP_CONFIG_MSG spConfigGetPCAPath(char* pcaPath, const SPConfig config){
 }
 
 
+
 /**
  * Frees all memory resources associate with config.
  * If config == NULL nothig is done.
  */
 void spConfigDestroy(SPConfig config){
 	if (config){
-		free(config); //more?
-		fclose(configFile); //needed?
+		if (config.spImagesDirectory)
+			free(config.spImagesDirectory);
+		if (config.spImagesPrefix)
+			free(config.spImagesPrefix);
+		if (config.spImagesSuffix)
+			free(config.spImagesSuffix);
+		if (config.spPCAFilename)
+			free(config.spPCAFilename);
+		if (config.spLoggerFilename)
+			free(config.spLoggerFilename);
+		free(config);
 	}
-}
+		if (configFile)
+			fclose(configFile);
+	}
 
