@@ -7,31 +7,13 @@
 
 #include "SPPoint.h"
 #include "SPConfig.h"
-//#include "KDTree.h"
+#include "KDTree.h"
 #include "SPBPriorityQueue.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
 #include <time.h>
-
-int SplitCoor = 0;
-
-typedef struct SPDKArray{
-	SPPoint** arr;
-	int size;
-	int** mat;
-}KD_ARRAY;
-
-typedef struct sp_kd_tree_node KDTreeNode;
-
-struct sp_kd_tree_node{
-	int dim;
-	double val;
-	KDTreeNode* l;
-	KDTreeNode* r;
-	SPPoint* data;
-};
 
 KDTreeNode createNode(int dim, double val, KDTreeNode* l, KDTreeNode* r, SPPoint* data){
 	KDTreeNode* nodeP = (KDTreeNode*) malloc(sizeof(KDTreeNode));
@@ -111,7 +93,7 @@ int** initMatrix(KD_ARRAY P){
 char* concat(const char *s1, const char *s2)
 {
 	//input: two strings
-	//output: the strings concatinated
+	//output: the strings concatenated
     char *result = malloc(strlen(s1)+strlen(s2)+1);//+1 for the zero-terminator
     //in real code you would check for errors in malloc here
     strcpy(result, s1);
@@ -123,23 +105,61 @@ char* convertIntToStr(int number){
 	//input: integer
 	//output: a string built from the int
 	int length = 0;
+	int i;
 	int number1 = number;
 	int number2 = number;
-	char* strNum;
+	int digit;
+
 	while(number1 > 0){
 		number1 = number1 / 10;
 		length++;
 	}
-	strNum = (char*) malloc(sizeof(char)*length + 1);
-	sprintf(strNum,"%d",number2);
+
+	char* strNum = (char*) malloc(sizeof(char)*length);
+	for(i = length; i >= 0; i--){
+		digit =  number2 % 10;
+		switch(digit){
+			case 1:
+				strNum[i] = '1';
+				break;
+			case 2:
+				strNum[i] = '2';
+				break;
+			case 3:
+				strNum[i] = '3';
+				break;
+			case 4:
+				strNum[i] = '4';
+				break;
+			case 5:
+				strNum[i] = '5';
+				break;
+			case 6:
+				strNum[i] = '6';
+				break;
+			case 7:
+				strNum[i] = '7';
+				break;
+			case 8:
+				strNum[i] = '8';
+				break;
+			case 9:
+				strNum[i] = '9';
+				break;
+			case 0:
+				strNum[i] = '0';
+				break;
+		}
+		number2 = number2/10;
+	}
 	return strNum;
 }
 
 char* buildAddress(int index){
-	char* tmp0 = concat(publicConfig.spImagesDirectory,publicConfig.spImagesPrefix);
+	char* tmp0 = concat(publicConfig->spImagesDirectory,publicConfig->spImagesPrefix);
 	char* indexStr = convertIntToStr(index);
 	char* tmp1 = concat(tmp0,indexStr);
-	char* tmp2 = concat(tmp1,publicConfig.spImagesSuffix);
+	char* tmp2 = concat(tmp1,publicConfig->spImagesSuffix);
 	free(tmp0);
 	free(indexStr);
 	free(tmp1);
@@ -147,7 +167,7 @@ char* buildAddress(int index){
 }
 
 char* buildFeatAddress(int index){
-	char* tmp0 = concat(publicConfig.spImagesDirectory,publicConfig.spImagesPrefix);
+	char* tmp0 = concat(publicConfig->spImagesDirectory,publicConfig->spImagesPrefix);
 	char* indexStr = convertIntToStr(index);
 	char* tmp1 = concat(tmp0,indexStr);
 	char* tmp2 = concat(tmp1,".feats");
@@ -158,7 +178,7 @@ char* buildFeatAddress(int index){
 }
 
 void writeFeatsToFile(FILE* f, SPPoint** feats,int index, int numOfFeats){
-	// input: file, features, index of the img, number of features to write for that img index.
+	// input: file, features, index of the img, number of features to write.
 	// output: writes to file the features
 	// the first line is the index, the second is number of features, the rest is the features data
 	int i, j, dim;
@@ -166,63 +186,87 @@ void writeFeatsToFile(FILE* f, SPPoint** feats,int index, int numOfFeats){
 	char* numOfFeatsStr = convertIntToStr(numOfFeats);
 	fputs(indexStr,f);
 	fputs("\n",f);
-	fputs(numOfFeatsStr,f);
+	fputs(numOfFeats,f);
 	fputs("\n",f);
-	free(indexStr);
-	free(numOfFeatsStr);
 
 	for(i = 0; i < numOfFeats; i++){
-		dim = spPointGetDimension(feats[i]);
-		for(j = 0; j < dim; j++){
-			fprintf(f,"%lf",spPointGetAxisCoor(feats[i], j));
-			fputs("\n",f);
+		for(j = 0; j < feats->dim; j++){
+			fputs(feats[i]->data[j],f);
+			fputs("\n");
 		}
 	}
 }
 
+KD_ARRAY* InitArray(SPPoint** arr, int size){// comment: in p.11 in the instruction they say that the function name is init and not initArray
+	//size suppose to be zero when extraction mode. other wise it is whatever
 
-//Vik
-KD_ARRAY InitArray(SPPoint** pointArr, int size){
-// input: gets an empty array pointer, mallocs it with the size 'size'
-//and starts adding points
-	KD_ARRAY kdArr;
-	int numberOfImages = publicConfig.spNumOfImages;
-	int dim = publicConfig.spPCADimension;
+	//---------------------------------------------------------
+	// writing everything to file
+	/*FILE* f;
 	int i = 0;
-	int j = 0;
-	int k = 0;
-	int numOfFeatures;
-	//pointArr = (SPPoint**)malloc(sizeof(SPPoint*)*size);// ??? did you allocate ok??? you are not sure about the only one * in the parenthasis
+	int j;
+	int l = publicConfig->spNumOfImages;
+	int* numOfFeatures;
+	SPPoint** tmpFeats;
+	char* address;
+	char* featAddress;
+	size = 0;
+	ImageProc(publicConfig);
+	if(publicConfig->spExtractionMode){
+		for(i = 0; i < l; i++){
+			address = buildAddress(i);
+			tmpFeats = getImageFeatures(address,i,numOfFeatures);//need to destroy that
+			free(address);
+			size = size + *numOfFeatures;
+			//open a new file:
+			featAddress = buildFeatAddress(i);
+			f = fopen(featAddress,"w+");
+			free(featAddress);
+			//write everything to a file:
+			writeFeatsToFile(f,tmpFeats,i, *numOfFeatures);
+			//--------------------------------------------------------------
+				for(i = 0; i < *numOfFeatures; i++){
+					spPointDestroy(tmpFeats[i]);
+				}
+			//--------------------------------------------------------------
+			free(tmpFeats);//not sure about this solution as it is ineffective but the best i came up with
+			fclose(f);
+		}
+	}*/
+	//--------------------------------------------------------------------------------
+	// writing featurs from file to the struct
+	size=0;
+	int l = publicConfig->spNumOfImages;
+	int i = 0;
+	int* numOfFeatures;
+	arr = (SPPoint**)malloc(sizeof(SPPoint*)*size);// ??? did you allocate ok??? you are not sure about the only one * in the parenthasis
+	int count;
 	FILE* f;
 	char* featAddress;
-	int index;
-	int countPosition = 0; //helper index to write in the array
-	for(i = 0; i < numberOfImages; i++){
+	for(i = 0; i < l; i++){
 		featAddress = buildFeatAddress(i);
 		f = fopen(featAddress,"r");
-		if(f == NULL){
-			printf("could not open the file\n"); //need to change to the logger msgs
-			printf("the feat Address is %s \n", featAddress);
-			return kdArr;
+		char* line = (char*)malloc(sizeof(char)*32);
+		char* ptr = line;
+		size_t len = 32;
+		ssize_t read;
+		read = getline(&line,&len,f);
+		read = getline(&line,&len,f);
+		*numOfFeatures = atoi(line);
+		count = 0;
+		while((read = getline(&line,&len,f)) != -1){
+			arr[i]->data[count] =(double)atoi(line);
+			count++;
+			size++;
 		}
-		fscanf(f,"%d",&index);
-		fscanf(f,"%d",&numOfFeatures);
-		for(j = 0; j < numOfFeatures; j++){
-			double* data = (double*)malloc(sizeof(double)*numOfFeatures);
-			pointArr[countPosition] = spPointCreate(data, dim,index);
-			for(k = 0; k < dim; k++){
-				fscanf(f,"%lf",&pointArr[countPosition]->data[k]);
-			}
-			countPosition++;
-		}
-		free(featAddress);
+		free(line);
 	}
-	kdArr.size = size;
-	kdArr.arr = pointArr;
-	kdArr.mat = initMatrix(kdArr);
+	KD_ARRAY* kdArr = (KD_ARRAY*)malloc(sizeof(KD_ARRAY));
+	*kdArr->size = size;
+	*kdArr->arr = arr;
+	*kdArr->mat = initMatrix(*kdArr);
 	return kdArr;
 }
-
 
 void KNearestNeighborSearch(KDTreeNode curr, SPBPQueue* bpq, SPPoint* testPoint){
 	// input: kd tree with all the features, a test point, and priority queue to work with
@@ -450,6 +494,14 @@ KD_ARRAY* Split(KD_ARRAY kdArr, int coor){
 	return splittedArr;
 }
 
+void destroyTree(KDTreeNode* node){
+	spPointDestroy(node->data);
+	if (node->l != NULL)
+		destroyTree(node->l);
+	if (node->r != NULL)
+		destroyTree(node->r);
+}
+
 KDTreeNode InitTree(KD_ARRAY arr){
 
 	//Recursion stopping condition
@@ -464,8 +516,8 @@ KDTreeNode InitTree(KD_ARRAY arr){
 	KDTreeNode r = InitTree(splittedArr[1]);
 	destroyArr(&splittedArr[0]);
 	destroyArr(&splittedArr[1]);
-	SPPoint* data;
-	return createNode(dim, val, l, r, data);
+	SPPoint* data = NULL;
+	return createNode(dim, val, &l, &r, data);
 }
 
 //init of KDarray
