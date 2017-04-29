@@ -608,12 +608,11 @@ void assignvariablesfromConfig(SPConfig config){
  *
  *
  */
-SPConfig spConfigCreate(const char* filename, SP_CONFIG_MSG* msg){
-	assert (msg);  //launch err
+SPConfig* spConfigCreate(const char* filename, SP_CONFIG_MSG* msg){
+	assert (msg); 
 
 	//malloc
-	SPConfig config;
-	config = (SPConfig)malloc(sizeof(config));
+	SPConfig config = (SPConfig)malloc(sizeof(config));
 	if (!config){
 		*msg = SP_CONFIG_ALLOC_FAIL;
 		return NULL;
@@ -622,21 +621,23 @@ SPConfig spConfigCreate(const char* filename, SP_CONFIG_MSG* msg){
 	//verify there's a file name
 	if (!filename){
 		*msg = SP_CONFIG_INVALID_ARGUMENT;
-		return config;
+		spConfigDestroy(config);
+		return NULL;
 	}
 
 	//verify file opens
 	configFile = fopen(filename, "r");
 	if (!configFile){
 		*msg = SP_CONFIG_CANNOT_OPEN_FILE;
-		return config;
+		spConfigDestroy(config);
+		return NULL;
 	}
 
 	//verify file is valid
 	*msg = checkConfigFileValid(filename);
 	if (*msg != SP_CONFIG_SUCCESS){
 		spConfigDestroy(config);
-		return config;
+		return NULL;
 	}
 
 	//if all works - get the variables
@@ -645,7 +646,7 @@ SPConfig spConfigCreate(const char* filename, SP_CONFIG_MSG* msg){
 	if(configFile)
 		fclose(configFile);
 
-	return config;
+	return &config;
 }
 
 
@@ -852,8 +853,19 @@ SP_CONFIG_MSG spConfigGetPCAPath(char* pcaPath, const SPConfig config){
  */
 void spConfigDestroy(SPConfig config){
 	if (config){
-		free(config); //more?
-		fclose(configFile); //needed?
+		if (config.spImagesDirectory)
+			free(config.spImagesDirectory);
+		if (config.spImagesPrefix)
+			free(config.spImagesPrefix);
+		if (config.spImagesSuffix)
+			free(config.spImagesSuffix);
+		if (config.spPCAFilename)
+			free(config.spPCAFilename);
+		if (config.spLoggerFilename)
+			free(config.spLoggerFilename);
+		free(config);
 	}
+	if (configFile)
+		fclose(configFile);
 }
 
