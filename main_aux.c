@@ -34,10 +34,10 @@ void freeAll(SPConfig config, SPLogger logger){
 	spLoggerDestroy(logger);
 }
 
-void spExtract(){
+int spExtract(){
 	FILE* f;
-	int size = 0;
 	int i = 0;
+	int size = 0;
 	int j;
 	int l = publicConfig->spNumOfImages;
 	int* numOfFeatures;
@@ -55,7 +55,7 @@ void spExtract(){
 			f = fopen(featAddress,"w+");
 			free(featAddress);
 			//write everything to a file:
-			writeFeatsToFile(f,tmpFeats,i, *numOfFeatures);
+			writeFeatsToFile(f,tmpFeats,i, *numOfFeatures); 
 			//--------------------------------------------------------------
 				for(i = 0; i < *numOfFeatures; i++){
 					spPointDestroy(tmpFeats[i]);
@@ -64,4 +64,5 @@ void spExtract(){
 	free(tmpFeats);//not sure about this solution as it is ineffective but the best i came up with
 	fclose(f);
 	}
+	return size;
 }
