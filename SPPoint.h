@@ -22,6 +22,12 @@
 /** Type for defining the point **/
 typedef struct sp_point_t SPPoint;
 
+struct sp_point_t {
+	int dim;
+	int index;
+	double* data;
+};
+
 /**
  * Allocates a new point in the memory.
  * Given data array, dimension dim and an index.
