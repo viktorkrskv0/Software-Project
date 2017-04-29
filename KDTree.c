@@ -7,7 +7,7 @@
 
 #include "SPPoint.h"
 #include "SPConfig.h"
-//#include "KDTree.h"
+#include "KDTree.h"
 #include "SPBPriorityQueue.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -450,6 +450,14 @@ KD_ARRAY* Split(KD_ARRAY kdArr, int coor){
 	return splittedArr;
 }
 
+void destroyTree(KDTreeNode* node){
+	spPointDestroy(node->data);
+	if (node->l != NULL)
+		destroyTree(node->l);
+	if (node->r != NULL)
+		destroyTree(node->r);
+}
+
 KDTreeNode InitTree(KD_ARRAY arr){
 
 	//Recursion stopping condition
@@ -464,8 +472,8 @@ KDTreeNode InitTree(KD_ARRAY arr){
 	KDTreeNode r = InitTree(splittedArr[1]);
 	destroyArr(&splittedArr[0]);
 	destroyArr(&splittedArr[1]);
-	SPPoint* data;
-	return createNode(dim, val, l, r, data);
+	SPPoint* data = NULL;
+	return createNode(dim, val, &l, &r, data);
 }
 
 //init of KDarray
