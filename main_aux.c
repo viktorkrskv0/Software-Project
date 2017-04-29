@@ -1,5 +1,8 @@
 #include <stdbool.h>
 #include "main_aux.h"
+#include "KDTree.h"
+#include "SPPoint.h"
+#include "SPConfig.h"
 
 void runTests(){
 	mainLoggerTest();
