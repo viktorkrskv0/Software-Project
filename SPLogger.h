@@ -23,7 +23,6 @@
  * spLoggerPrintDebug   - Prints debug messages at level {Debug}
  * spLoggerPrintMsg     - Prints the exact message at any level (Without formatting)
  */
-
 /** A type used to decide the level of the logger**/
 typedef enum sp_logger_level_t {
 	SP_LOGGER_ERROR_LEVEL = 1, //Error level
@@ -45,6 +44,9 @@ typedef enum sp_logger_msg_t {
 
 /** A type used for defining the logger**/
 typedef struct sp_logger_t* SPLogger;
+
+// Global variable holding the logger
+SPLogger logger;
 
 /**
  * Creates a logger. This function should be called once, prior
