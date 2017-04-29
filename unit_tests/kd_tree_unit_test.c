@@ -108,9 +108,9 @@ KD_ARRAY BuildTestArr(){
 
 
 	SPPoint** arr = (SPPoint**)malloc(sizeof(SPPoint*) * 3);
-	double data0[3]= {3,0.1,178};
-	double data1[3]= {2,1.5,2};
-	double data2[3]= {1,1.5,1};
++	double* data0= {3,0.1,178};
++	double* data1= {2,1.5,2};
++	double* data2= {1,1.5,1};
 	SPPoint* P1 = spPointCreate(data0, 3, 0);
 	arr[0] = P1;
 	SPPoint* P2 = spPointCreate(data1, 3, 0);
@@ -126,7 +126,7 @@ KD_ARRAY BuildTestArr(){
 }
 
 KD_ARRAY BuildSmallTestArr(){
-	{1,1.5,1}
+//	{1,1.5,1}
 }
 
 static bool SplitTest() {
@@ -174,8 +174,8 @@ KDTreeNode PrintTree(KD_ARRAY arr){
 	KDTreeNode r = InitTree(splittedArr[1]);
 	destroyArr(&splittedArr[0]);
 	destroyArr(&splittedArr[1]);
-	SPPoint* data;
-	return createNode(dim, val, l, r, data);
++	SPPoint* data = NULL;
++	return createNode(dim, val, &l, &r, data);
 }
 
 static bool InitTreeTest() {
