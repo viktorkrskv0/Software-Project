@@ -14,8 +14,6 @@ typedef struct sp_logger_t{
 	SP_LOGGER_LEVEL level; //Indicates the level
 }*SPLogger;
 
-SPLogger logger = NULL; // Global variable holding the logger
-
 
 /**
  * Creates a logger. This function should be called once, prior
@@ -47,7 +45,7 @@ SP_LOGGER_MSG spLoggerCreate(const char* filename, SP_LOGGER_LEVEL level) {
 	} else { //Otherwise open the file in write mode
 		logger->outputChannel = fopen(filename, SP_LOGGER_OPEN_MODE);
 		if (logger->outputChannel == NULL) { //Open failed
-			free(logger);
+			spLoggerDestroy(logger);
 			logger = NULL;
 			return SP_LOGGER_CANNOT_OPEN_FILE;
 		}
