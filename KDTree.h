@@ -17,8 +17,6 @@
 #include <string.h>
 #include <time.h>
 
-int SplitCoor = 0;
-
 typedef struct SPDKArray{
 	SPPoint** arr;
 	int size;
