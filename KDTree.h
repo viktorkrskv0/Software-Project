@@ -19,9 +19,21 @@
 
 int SplitCoor = 0;
 
-typedef struct SPDKArray KD_ARRAY;
+typedef struct SPDKArray{
+	SPPoint** arr;
+	int size;
+	int** mat;
+}KD_ARRAY;
 
 typedef struct sp_kd_tree_node KDTreeNode;
+
+struct sp_kd_tree_node{
+	int dim;
+	double val;
+	KDTreeNode* l;
+	KDTreeNode* r;
+	SPPoint* data;
+};
 
 KDTreeNode createNode(int dim, double val, KDTreeNode* l, KDTreeNode* r, SPPoint* data);
 
