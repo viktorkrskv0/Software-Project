@@ -1,47 +1,35 @@
 #include <stdbool.h>
 #include "main_aux.h"
-#define debug config.spLoggerLevel = 3
-#define info config.spLoggerLevel >= 2
-#define warning config.spLoggerLevel >= 1
 
+void runTests(){
+	mainLoggerTest();
+	mainConfigTest();
+	mainTreeTest();
+}
 
-// not needed? this is why we have SPLogger
-//bool spManageMSG(SP_CONFIG_MSG msg, SPConfig config){
+bool manageCMSG(SP_CONFIG_MSG* Cmsg){
+	if (Cmsg)
+		if(*Cmsg != SP_CONFIG_SUCCESS)
+			return false;
+	return true;
+}
 
-//	switch (msg)
-//
-//	case SP_CONFIG_MISSING_DIR:
-//		info ?
-//		break;
-//
-//	case SP_CONFIG_MISSING_PREFIX:
-//		break;
-//
-//	case SP_CONFIG_MISSING_SUFFIX:
-//		break;
-//
-//	case SP_CONFIG_MISSING_NUM_IMAGES:
-//		break;
-//
-//	case SP_CONFIG_CANNOT_OPEN_FILE:
-//		break;
-//
-//	case SP_CONFIG_ALLOC_FAIL:
-//		break;
-//
-//	case SP_CONFIG_INVALID_INTEGER:
-//		break;
-//
-//	case SP_CONFIG_INVALID_STRING:
-//		break;
-//
-//	case SP_CONFIG_INVALID_ARGUMENT:
-//		break;
-//
-//	case SP_CONFIG_INDEX_OUT_OF_RANGE:
-//		break;
-//
-//	case SP_CONFIG_SUCCESS:
-//		break;
-//	return true;
-//}
+bool manageLMSG(SP_LOGGER_MSG* Smsg){
+	if (Smsg) //always true if the code is correct
+		if(*Smsg != SP_LOGGER_SUCCESS){
+			printf("Logger creation failed");
+			return false;
+		}
+	return true;
+}
+
+char* getConfigFileName(int argc, char* argv[]){
+	if (argc > 1)
+		return argv[1];
+	return "spcbir.config";
+}
+
+void freeAll(SPConfig config, SPLogger logger){
+	spConfigDestroy(config);
+	spLoggerDestroy(logger);
+}
